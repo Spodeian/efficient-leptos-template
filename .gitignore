@@ -1,0 +1,23 @@
+# Rust build artifacts
+/target
+Cargo.lock
+
+# Trunk and Web build distribution
+/crates/web/dist
+/dist
+
+# Cloudflare Pages / Workers
+.wrangler
+.dev.vars
+
+# Editor and OS
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Node
+node_modules/
+package-lock.json

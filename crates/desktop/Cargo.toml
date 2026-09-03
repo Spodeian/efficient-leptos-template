@@ -1,0 +1,17 @@
+[package]
+name = "desktop"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "Native desktop runner for the Serverless & Desktop Leptos Template powered by Tauri v2"
+
+[build-dependencies]
+tauri-build = { workspace = true }
+
+[dependencies]
+tauri = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+app = { workspace = true }
+shared = { workspace = true }
