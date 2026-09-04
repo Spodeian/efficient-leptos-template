@@ -11,7 +11,7 @@ final-status-level = "flaky"
 fail-fast = false
 retries = 2
 status-level = "pass"
-final-status-level = "failed"
+final-status-level = "fail"
 
 [profile.ci.junit]
 path = "junit.xml"
