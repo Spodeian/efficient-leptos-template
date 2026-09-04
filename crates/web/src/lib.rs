@@ -12,8 +12,31 @@ pub fn main_js() {
 
     #[cfg(feature = "hydrate")]
     {
-        tracing::info!("Hydrating Serverless Leptos application from server-rendered HTML...");
-        leptos::mount::hydrate_body(app::App);
+        let has_ssr_content = web_sys::window()
+            .and_then(|w| w.document())
+            .and_then(|doc| doc.body())
+            .map(|body| {
+                let children = body.children();
+                let mut app_nodes = 0;
+                for i in 0..children.length() {
+                    if let Some(el) = children.item(i) {
+                        let tag = el.tag_name().to_ascii_lowercase();
+                        if tag != "script" && tag != "noscript" && tag != "style" {
+                            app_nodes += 1;
+                        }
+                    }
+                }
+                app_nodes > 0
+            })
+            .unwrap_or(false);
+
+        if has_ssr_content {
+            tracing::info!("Hydrating Serverless Leptos application from server-rendered HTML...");
+            leptos::mount::hydrate_body(app::App);
+        } else {
+            tracing::info!("Static HTML shell detected; mounting Serverless Leptos application via mount_to_body...");
+            leptos::mount::mount_to_body(app::App);
+        }
     }
 
     #[cfg(not(feature = "hydrate"))]

@@ -225,6 +225,13 @@ if os.path.exists(html_path):
 ' "$DIST_DIR"
     fi
 
+    # Native Cloudflare Pages SPA fallback routes (prevents infinite redirect loops)
+    if [ -f "$DIST_DIR/index.html" ]; then
+        echo "Creating 200.html and 404.html SPA fallbacks..."
+        cp -f "$DIST_DIR/index.html" "$DIST_DIR/200.html"
+        cp -f "$DIST_DIR/index.html" "$DIST_DIR/404.html"
+    fi
+
     # 8. High-Ratio Asset Pre-Compression (Brotli Level 11 + Gzip Level 9)
     echo "=== Generating Pre-Compressed Brotli (.br) & Gzip (.gz) Assets ==="
     if command -v python3 &> /dev/null; then
