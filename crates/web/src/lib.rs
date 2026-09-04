@@ -14,21 +14,8 @@ pub fn main_js() {
     {
         let has_ssr_content = web_sys::window()
             .and_then(|w| w.document())
-            .and_then(|doc| doc.body())
-            .map(|body| {
-                let children = body.children();
-                let mut app_nodes = 0;
-                for i in 0..children.length() {
-                    if let Some(el) = children.item(i) {
-                        let tag = el.tag_name().to_ascii_lowercase();
-                        if tag != "script" && tag != "noscript" && tag != "style" {
-                            app_nodes += 1;
-                        }
-                    }
-                }
-                app_nodes > 0
-            })
-            .unwrap_or(false);
+            .and_then(|doc| doc.query_selector(".app-root").ok().flatten())
+            .is_some();
 
         if has_ssr_content {
             tracing::info!("Hydrating Serverless Leptos application from server-rendered HTML...");
