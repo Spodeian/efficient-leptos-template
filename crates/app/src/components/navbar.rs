@@ -35,7 +35,7 @@ pub fn Navbar(
                             <span class="brand-subtitle">"& Desktop Template"</span>
                         </div>
                     </a>
-                    <span class="badge-tech">"Leptos 0.8"</span>
+                    <span class="badge-tech">{concat!("v", env!("CARGO_PKG_VERSION"))}</span>
                 </div>
 
                 <nav class="desktop-nav">

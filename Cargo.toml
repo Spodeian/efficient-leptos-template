@@ -17,9 +17,9 @@ readme = "README.md"
 description = "Modern, modular Serverless (WASM/Cloudflare Pages/PWA) & Native Desktop template built with Rust and Leptos"
 
 [workspace.dependencies]
-leptos = { version = "0.8", features = ["csr"] }
-leptos_router = "0.8"
-leptos_meta = "0.8"
+leptos = { version = "0.8", default-features = false }
+leptos_router = { version = "0.8", default-features = false }
+leptos_meta = { version = "0.8", default-features = false }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1.0"
 thiserror = "2.0"

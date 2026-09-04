@@ -20,3 +20,9 @@ tracing-wasm = { workspace = true }
 tracing = { workspace = true }
 app = { workspace = true }
 shared = { workspace = true }
+
+[features]
+default = ["hydrate"]
+hydrate = ["app/hydrate", "leptos/hydrate"]
+csr = ["app/csr", "leptos/csr"]
+

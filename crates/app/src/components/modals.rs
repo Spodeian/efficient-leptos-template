@@ -67,7 +67,7 @@ pub fn HelpModal(is_open: RwSignal<bool>) -> impl IntoView {
                 <div class="modal-backdrop" on:click=close_modal>
                     <div class="modal-card modal-large" on:click=move |ev| ev.stop_propagation()>
                         <div class="modal-header">
-                            <h3 class="modal-title">"Architecture & Help Guide"</h3>
+                            <h3 class="modal-title">"Architecture & Help Guide • " {concat!("v", env!("CARGO_PKG_VERSION"))}</h3>
                             <button class="modal-close-btn" on:click=close_modal>"✕"</button>
                         </div>
                         <div class="modal-body help-content">
