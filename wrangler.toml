@@ -5,3 +5,4 @@ pages_build_output_dir = "crates/web/dist"
 
 [vars]
 ENVIRONMENT = "production"
+NODE_VERSION = "24"
