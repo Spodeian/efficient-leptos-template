@@ -60,7 +60,7 @@ tauri = { version = "2", features = ["config-toml"] }
 tauri-build = { version = "2", features = ["config-toml"] }
 
 [profile.release]
-opt-level = "z"
+opt-level = 3
 lto = "fat"
 codegen-units = 1
 panic = "abort"
@@ -74,7 +74,7 @@ opt-level = 2
 codegen-units = 256
 
 [profile.bench]
-opt-level = "z"
+opt-level = 3
 lto = "fat"
 codegen-units = 1
 debug = false
