@@ -1,6 +1,5 @@
 # Rust build artifacts
 /target
-Cargo.lock
 
 # Trunk and Web build distribution
 /crates/web/dist

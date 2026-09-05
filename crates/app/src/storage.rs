@@ -123,7 +123,7 @@ pub fn save_state_to_storage(state: &AppState) -> StorageBackend {
     {
         if let Some(window) = web_sys::window() {
             if let Ok(json_str) = shared::export_to_json(state) {
-                let mut local_storage_failed = true;
+                let local_storage_failed = true;
                 if let Ok(Some(storage)) = window.local_storage() {
                     match storage.set_item(STORAGE_KEY_STATE, &json_str) {
                         Ok(()) => {

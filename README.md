@@ -1,6 +1,14 @@
 # Serverless & Desktop Leptos Template
 
-A production-ready, modular Rust & [Leptos 0.8](https://leptos.dev) template designed for high-performance **Serverless Web (WASM / Cloudflare Pages / PWA via Trunk)** and **Native Desktop (Tauri v2)** applications.
+[![CI & Test Suite](https://github.com/Spodeian/efficient-leptos-template/actions/workflows/ci.yml/badge.svg)](https://github.com/Spodeian/efficient-leptos-template/actions/workflows/ci.yml)
+[![GitHub Pages](https://github.com/Spodeian/efficient-leptos-template/actions/workflows/static.yml/badge.svg)](https://github.com/Spodeian/efficient-leptos-template/actions/workflows/static.yml)
+[![License: MIT OR Apache-2.0](https://img.shields.io/badge/License-MIT%20OR%20Apache--2.0-blue.svg)](LICENSE)
+[![Rust: 2024 Edition](https://img.shields.io/badge/Rust-2024%20Edition-orange.svg)](https://www.rust-lang.org)
+[![Leptos: 0.8](https://img.shields.io/badge/Leptos-0.8-crimson.svg)](https://leptos.dev)
+[![Tauri: v2](https://img.shields.io/badge/Tauri-v2-blue.svg)](https://v2.tauri.app)
+[![Cloudflare Pages: v3](https://img.shields.io/badge/Cloudflare%20Pages-Build%20System%20v3-F38020.svg)](https://pages.cloudflare.com)
+
+A production-ready, modular Rust & [Leptos 0.8](https://leptos.dev) template designed for high-performance **Serverless Web (WASM / Cloudflare Pages / PWA via Trunk)** and **Native Desktop (Windows, macOS, Linux via Tauri v2)** applications.
 
 Based directly on the proven architecture, production fixes, and deployment pipelines of [Revisited IPIP-NEO](https://github.com/Spodeian/Revisited-IPIP-NEO).
 
@@ -8,13 +16,13 @@ Based directly on the proven architecture, production fixes, and deployment pipe
 
 ## 🏛️ Architectural Structure
 
-The workspace is organized into four decoupled crates:
+The workspace is organized into four decoupled, single-responsibility crates:
 
 ```mermaid
 graph TD
-    Shared["crates/shared<br/>(Domain Models, JSON/CSV Serialization, State)"]
+    Shared["crates/shared<br/>(Domain Models, JSON/CSV/BSON Serialization, State)"]
     App["crates/app<br/>(Leptos UI Components, Reactive State, Theme, Modals, Views)"]
-    Desktop["crates/desktop<br/>(Tauri v2 Native Desktop App)"]
+    Desktop["crates/desktop<br/>(Native Desktop App via Tauri v2)"]
     Web["crates/web<br/>(Static WebAssembly Entrypoint, PWA Service Worker, Trunk Assets)"]
 
     App --> Shared
@@ -24,36 +32,41 @@ graph TD
     Web --> Shared
 ```
 
-- **[`crates/shared`](crates/shared)**: Core domain models, business logic, configuration (`ThemeMode`, `AppConfig`, `AppState`), and interchange serialization (JSON and CSV import/export).
-- **[`crates/app`](crates/app)**: Leptos UI components, reactive signals, responsive layout, dark/light theme engine, modal dialogs, and persistent state management via `LocalStorage`.
-- **[`crates/web`](crates/web)**: WebAssembly client entrypoint with `wasm-bindgen`, Trunk bundling configuration, and PWA / serverless assets (`index.html`, `style.css`, `sw.js`, `manifest.json`, `_headers`, `_redirects`).
-- **[`crates/desktop`](crates/desktop)**: Native desktop runner configured with `tauri` v2, custom protocol asset serving, and native window management.
+- **[`crates/shared`](crates/shared)**: Core domain models, business logic, configuration (`ThemeMode`, `AppConfig`, `AppState`), and interchange serialization (JSON, CSV, and compressed BSON import/export).
+- **[`crates/app`](crates/app)**: Modular Leptos UI components, reactive signals, responsive layout, dark/light theme engine, modal dialogs, and persistent multi-tier state management (`components/navbar.rs`, `components/item_list.rs`, `components/modals.rs`, `components/theme.rs`).
+- **[`crates/desktop`](crates/desktop)**: Native desktop runner configured with Tauri v2, custom protocol asset serving, bundled application icons, and native window management.
+- **[`crates/web`](crates/web)**: WebAssembly client entrypoint with `wasm-bindgen`, Trunk bundling configuration, and PWA / serverless assets (`index.html`, `style.css`, `sw.js`, `manifest.json`, `favicon.svg`, `favicon.ico`, `_headers`, `_redirects`).
 
 ---
 
 ## ✨ Key Features
 
-- **⚡ Serverless Static Web & Native Desktop Dual-Target**: Compile identical reactive application logic to static client-side WASM bundles for Cloudflare Pages or native desktop executables via Tauri v2.
-- **💾 Automatic Cross-Platform State Persistence**: Synchronizes local state seamlessly across browser refreshes and desktop restarts using browser `LocalStorage`.
-- **📱 Responsive & Touch-Friendly UI**: Layout automatically adapts across desktop displays, tablets, and mobile viewports with an adaptive navbar and drawer.
-- **🎨 Theme Engine**: Built-in Dark Mode and a soothing, high-contrast Warm Light Mode with instant DOM synchronization and persistence.
+- **⚡ Serverless Static Web & Native Desktop Dual-Target**: Compile identical reactive application logic to static client-side WASM bundles for Cloudflare Pages and GitHub Pages or native desktop executables via Tauri v2.
+- **💾 Automatic Cross-Platform State Persistence**:
+  - **Tier 1 (Fast Sync)**: Synchronous browser `LocalStorage` under dedicated key `serverless_leptos_app_state`.
+  - **Tier 2 (Extended Quota)**: Asynchronous `IndexedDB` fallback if `LocalStorage` quota is exceeded.
+  - **Storage Diagnostics Bridge**: Real-time inspection of storage persistence status (`persisted` vs `ephemeral`) and permission requests (`StorageManager.persist()`).
+- **📱 Responsive & Touch-Friendly UI**: Layout automatically adapts across widescreen monitors, tablets, and mobile devices with a responsive navbar, search filters, and progress metrics.
+- **🎨 Theme Engine**: Built-in Charcoal Dark Mode and soothing Warm Light Mode with instant DOM attribute synchronization (`data-theme`) and persistence.
 - **⌨️ Intuitive Keyboard Support**: Press `Enter` to quickly submit new items and `Escape` to close open modal dialogs.
-- **📦 Data Interchange & File Downloads**: Built-in JSON & CSV export/import dialogs with copy-to-clipboard toasts and direct browser file download triggers (`trigger_file_download`).
+- **📦 Data Interchange & File Downloads**:
+  - Built-in export and import dialogs supporting formatted **JSON**, RFC 4180-compliant **CSV**, and compact **Compressed BSON** (Zlib-compressed binary).
+  - Copy-to-clipboard notification feedback and direct browser file download triggers (`trigger_file_download`, `trigger_binary_download`).
 - **📶 Immutable Serverless PWA Caching**: Hybrid service worker caching strategy (**Network-First** for `index.html` to ensure atomic releases; **Cache-First** for immutable, content-hashed `.wasm`, `.js`, and `.css` assets) with offline fallback.
-- **🛡️ SRI Minification Immunity**: Configured with `data-integrity="none"` to allow aggressive post-build asset minification (HTML, CSS, JS) without SRI hash mismatches or white screens.
-- **🚀 Cloudflare Pages Build System v3 & GitHub Pages CI/CD**: Fully compliant with Cloudflare's modern v3 build image, automated toolchain installation (`rust-toolchain.toml`), SPA routing (`_redirects`), Cloudflare headers (`_headers`), Wrangler configuration (`wrangler.toml`), and GitHub Actions workflow (`.github/workflows/ci.yml`).
+- **🛡️ SRI Minification Immunity**: Configured with `data-integrity="none"` in `index.html` to allow aggressive post-build asset minification (HTML, CSS, JS) without SRI hash mismatches or white screens.
+- **🚀 Automated CI/CD & Deployment Pipelines**: Fully compliant with Cloudflare Pages Build System v3 (`deploy.sh`), GitHub Pages (`.github/workflows/static.yml`), and GitHub Actions CI test suite (`.github/workflows/ci.yml`).
 
 ---
 
 ## 🛠️ Build Requirements
 
-- **Rust**: Automatically managed via [`rust-toolchain.toml`](rust-toolchain.toml) (installs stable with `wasm32-unknown-unknown`).
+- **Rust Toolchain**: Automatically managed via [`rust-toolchain.toml`](rust-toolchain.toml) (installs stable with `wasm32-unknown-unknown`).
 - **Trunk Bundler**:
   ```bash
   cargo install trunk
   ```
 - *(Optional)* **wasm-opt** (Binaryen v122+) for release size optimization.
-- *(Optional)* **Tauri CLI**:
+- *(Optional)* **Tauri CLI** (for native desktop development):
   ```bash
   cargo install tauri-cli
   ```
@@ -76,12 +89,16 @@ Launches the native desktop window with live webview reloading.
 
 ### 3. Run Test Suite
 ```bash
+# Standard cargo test
 cargo test --workspace
+
+# Or with cargo-nextest (faster, parallel execution)
+cargo nextest run --workspace
 ```
 
-### 4. Run Clippy Static Analysis
+### 4. Run Static Analysis & Linter
 ```bash
-cargo clippy --workspace --all-targets
+cargo clippy --workspace --all-targets -- -D warnings
 ```
 
 ---
@@ -111,11 +128,15 @@ bash deploy.sh
   - `RUST_VERSION`: `stable` (Optional if `rust-toolchain.toml` is present)
   - `CARGO_HOME`: `/opt/buildhome/.cargo`
 
-#### Local Testing with Wrangler:
+#### Local Preview with Wrangler:
 ```bash
 trunk build --release
 npx wrangler pages dev crates/web/dist
 ```
+
+### GitHub Pages Deployment
+
+The repository includes an automated GitHub Actions workflow in [`.github/workflows/static.yml`](.github/workflows/static.yml) that builds, minifies, and deploys your WASM web application to GitHub Pages whenever you push changes to `main`.
 
 ### Native Desktop Executable (Tauri v2)
 ```bash
@@ -127,10 +148,24 @@ The compiled release executable and installer bundles will be generated in `targ
 
 ## 🧩 Customizing for Your App
 
-1. **Rename Workspace & Metadata**: Update `name`, `version`, `authors`, and `description` in [`Cargo.toml`](Cargo.toml) and subcrate manifests.
+1. **Rename Workspace & Metadata**: Update `name`, `version`, `authors`, and `repository` in [`Cargo.toml`](Cargo.toml) and subcrate manifests.
 2. **Define Domain Data**: Replace `Item` and `ItemCollection` in [`crates/shared/src/models.rs`](crates/shared/src/models.rs) with your application's domain models.
-3. **Build Views & Components**: Update [`crates/app/src/lib.rs`](crates/app/src/lib.rs) and [`crates/app/src/components/`](crates/app/src/components/) with your UI widgets, layouts, and views.
-4. **Update PWA & SEO Tags**: Customize `title`, meta description, OpenGraph tags, and icons in [`crates/web/index.html`](crates/web/index.html) and [`crates/web/manifest.json`](crates/web/manifest.json).
+3. **Build Views & Components**: Update or add reactive Leptos components in [`crates/app/src/components/`](crates/app/src/components/):
+   - [`components/navbar.rs`](crates/app/src/components/navbar.rs): Header navigation and tools.
+   - [`components/item_list.rs`](crates/app/src/components/item_list.rs): Reactive item listing and input forms.
+   - [`components/modals.rs`](crates/app/src/components/modals.rs): Modal dialogs and data import/export.
+   - [`components/theme.rs`](crates/app/src/components/theme.rs): Theme manager and toggle button.
+4. **Update PWA & SEO Tags**: Customize `title`, meta description, OpenGraph tags, and icons in [`crates/web/index.html`](crates/web/index.html), [`crates/web/manifest.json`](crates/web/manifest.json), and [`crates/desktop/tauri.conf.json`](crates/desktop/tauri.conf.json).
+
+---
+
+## 🧪 Testing & Quality Assurance
+
+| Test Suite | Location | Purpose |
+|---|---|---|
+| **Shared Model Tests** | `crates/shared/tests/shared_tests.rs` | Collection logic, JSON/CSV/BSON roundtrip, backward compatibility |
+| **Desktop Smoke** | `crates/desktop/tests/smoke_tests.rs` | Tauri context generation and configuration validation |
+| **Web Smoke** | `crates/web/tests/smoke_tests.rs` | WebAssembly client initialization and App state linkage |
 
 ---
 

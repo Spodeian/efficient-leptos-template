@@ -2,6 +2,7 @@
 target = "crates/web/index.html"
 dist = "crates/web/dist"
 public_url = "/"
+wasm_opt = "z"
 
 [serve]
 address = "127.0.0.1"
