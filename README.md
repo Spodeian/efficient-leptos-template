@@ -22,7 +22,7 @@ The workspace is organized into four decoupled, single-responsibility crates:
 graph TD
     Shared["crates/shared<br/>(Domain Models, JSON/CSV/BSON Serialization, State)"]
     App["crates/app<br/>(Leptos UI Components, Reactive State, Theme, Modals, Views)"]
-    Desktop["crates/desktop<br/>(Native Desktop App via Tauri v2)"]
+    Desktop["crates/desktop<br/>(Native Desktop App via Tauri v2) + mimalloc"]
     Web["crates/web<br/>(Static WebAssembly Entrypoint, PWA Service Worker, Trunk Assets)"]
 
     App --> Shared
