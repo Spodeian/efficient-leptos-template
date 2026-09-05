@@ -8,7 +8,7 @@ pub fn main_js() {
     console_error_panic_hook::set_once();
 
     // Initialize tracing logging for browser console
-    let _ = tracing_wasm::set_as_global_default();
+    let _ = tracing_subscriber::fmt().with_writer(tracing_web::MakeConsoleWriter).init();
 
     #[cfg(feature = "hydrate")]
     {
