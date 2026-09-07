@@ -59,12 +59,12 @@ pub fn import_from_csv(csv_str: &str) -> Result<ItemCollection, ExportError> {
     let mut lines = trimmed.lines();
 
     // Verify or skip header
-    if let Some(header) = lines.next() {
-        if !header.to_lowercase().contains("title") {
-            // Process as data if header isn't standard
-            if let Some(item) = parse_csv_line(header)? {
-                items.push(item);
-            }
+    if let Some(header) = lines.next()
+        && !header.to_lowercase().contains("title")
+    {
+        // Process as data if header isn't standard
+        if let Some(item) = parse_csv_line(header)? {
+            items.push(item);
         }
     }
 

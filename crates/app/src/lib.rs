@@ -1,4 +1,6 @@
 //! Main Leptos UI application view controller, layout components, and state synchronization.
+#![allow(clippy::unit_arg)]
+#![allow(clippy::unused_unit)]
 
 pub mod components;
 pub mod storage;

@@ -72,10 +72,10 @@ pub fn ItemList(state: RwSignal<AppState>) -> impl IntoView {
                 if !allow_completed && item.completed {
                     return false;
                 }
-                if let Some(p) = p_filter {
-                    if item.priority != p {
-                        return false;
-                    }
+                if let Some(p) = p_filter
+                    && item.priority != p
+                {
+                    return false;
                 }
                 if !query.is_empty() {
                     let in_title = item.title.to_lowercase().contains(&query);
