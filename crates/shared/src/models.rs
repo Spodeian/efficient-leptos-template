@@ -65,7 +65,12 @@ pub struct Item {
 }
 
 impl Item {
-    pub fn new(id: impl Into<String>, title: impl Into<String>, description: impl Into<String>, priority: Priority) -> Self {
+    pub fn new(
+        id: impl Into<String>,
+        title: impl Into<String>,
+        description: impl Into<String>,
+        priority: Priority,
+    ) -> Self {
         Self {
             id: id.into(),
             title: title.into(),
@@ -95,7 +100,9 @@ impl ItemCollection {
                 Item {
                     id: "item-1".to_string(),
                     title: "Deploy Serverless WebApp".to_string(),
-                    description: "Publish high-performance WASM application directly to Cloudflare Pages".to_string(),
+                    description:
+                        "Publish high-performance WASM application directly to Cloudflare Pages"
+                            .to_string(),
                     priority: Priority::Critical,
                     completed: false,
                     created_at: 1,
@@ -103,7 +110,9 @@ impl ItemCollection {
                 Item {
                     id: "item-2".to_string(),
                     title: "Configure Native Desktop (Tauri)".to_string(),
-                    description: "Verify cross-platform desktop compilation and local asset loading".to_string(),
+                    description:
+                        "Verify cross-platform desktop compilation and local asset loading"
+                            .to_string(),
                     priority: Priority::High,
                     completed: false,
                     created_at: 2,
@@ -111,7 +120,8 @@ impl ItemCollection {
                 Item {
                     id: "item-3".to_string(),
                     title: "Verify Offline PWA Caching".to_string(),
-                    description: "Check Service Worker caching strategy for offline web support".to_string(),
+                    description: "Check Service Worker caching strategy for offline web support"
+                        .to_string(),
                     priority: Priority::Medium,
                     completed: true,
                     created_at: 3,
@@ -119,7 +129,9 @@ impl ItemCollection {
                 Item {
                     id: "item-4".to_string(),
                     title: "Test JSON & CSV Interchange".to_string(),
-                    description: "Import and export data with clipboard toasts and direct downloads".to_string(),
+                    description:
+                        "Import and export data with clipboard toasts and direct downloads"
+                            .to_string(),
                     priority: Priority::Low,
                     completed: false,
                     created_at: 4,

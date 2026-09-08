@@ -75,7 +75,9 @@ pub fn import_from_csv(csv_str: &str) -> Result<ItemCollection, ExportError> {
     }
 
     if items.is_empty() {
-        return Err(ExportError::CsvParse("No valid items parsed from CSV".to_string()));
+        return Err(ExportError::CsvParse(
+            "No valid items parsed from CSV".to_string(),
+        ));
     }
 
     Ok(ItemCollection { items })
@@ -93,7 +95,10 @@ fn parse_csv_line(line: &str) -> Result<Option<Item>, ExportError> {
     }
 
     let id = fields.first().cloned().unwrap_or_default();
-    let title = fields.get(1).cloned().unwrap_or_else(|| "Untitled".to_string());
+    let title = fields
+        .get(1)
+        .cloned()
+        .unwrap_or_else(|| "Untitled".to_string());
     let description = fields.get(2).cloned().unwrap_or_default();
     let priority_str = fields.get(3).map(|s| s.as_str()).unwrap_or("Medium");
     let completed_str = fields.get(4).map(|s| s.as_str()).unwrap_or("false");
@@ -111,7 +116,11 @@ fn parse_csv_line(line: &str) -> Result<Option<Item>, ExportError> {
     let created_at = created_at_str.parse::<u64>().unwrap_or(0);
 
     Ok(Some(Item {
-        id: if id.is_empty() { format!("item-{}", items_hash(&title)) } else { id },
+        id: if id.is_empty() {
+            format!("item-{}", items_hash(&title))
+        } else {
+            id
+        },
         title,
         description,
         priority,
@@ -171,12 +180,15 @@ fn parse_csv_fields(line: &str) -> Vec<String> {
 
 /// Exports the entire application state into compressed BSON binary bytes (Zlib-compressed BSON).
 pub fn export_to_compressed_bson(state: &AppState) -> Result<Vec<u8>, String> {
-    let bson_bytes = bson::to_vec(state).map_err(|e| format!("BSON serialization failed: {}", e))?;
+    let bson_bytes =
+        bson::to_vec(state).map_err(|e| format!("BSON serialization failed: {}", e))?;
     Ok(miniz_oxide::deflate::compress_to_vec_zlib(&bson_bytes, 6))
 }
 
 /// Imports and restores an AppState from a compressed (or raw) BSON slice.
 pub fn import_from_compressed_bson(bytes: &[u8]) -> Result<AppState, String> {
-    let bson_bytes = miniz_oxide::inflate::decompress_to_vec_zlib(bytes).unwrap_or_else(|_| bytes.to_vec());
-    bson::from_slice::<AppState>(&bson_bytes).map_err(|e| format!("BSON deserialization failed: {}", e))
+    let bson_bytes =
+        miniz_oxide::inflate::decompress_to_vec_zlib(bytes).unwrap_or_else(|_| bytes.to_vec());
+    bson::from_slice::<AppState>(&bson_bytes)
+        .map_err(|e| format!("BSON deserialization failed: {}", e))
 }

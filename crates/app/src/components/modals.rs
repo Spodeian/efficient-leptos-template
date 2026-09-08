@@ -1,13 +1,13 @@
 //! Modal dialogs for State Reset, Help & Architecture, Data Import, Data Export, and Storage Diagnostics.
 
 use crate::storage::{
-    copy_to_clipboard, query_storage_diagnostics, request_persistent_storage, save_state_to_storage,
-    trigger_binary_download, trigger_file_download, trigger_pwa_install,
+    copy_to_clipboard, query_storage_diagnostics, request_persistent_storage,
+    save_state_to_storage, trigger_binary_download, trigger_file_download, trigger_pwa_install,
 };
 use leptos::prelude::*;
 use shared::{
-    export_to_compressed_bson, export_to_csv, export_to_json, import_from_compressed_bson,
-    import_from_csv, import_from_json, AppState,
+    AppState, export_to_compressed_bson, export_to_csv, export_to_json,
+    import_from_compressed_bson, import_from_csv, import_from_json,
 };
 use tracing::info;
 
@@ -154,7 +154,10 @@ pub fn ImportModal(is_open: RwSignal<bool>, state: RwSignal<AppState>) -> impl I
                     let count = new_state.collection.items.len();
                     state.set(new_state.clone());
                     save_state_to_storage(&new_state);
-                    status_message.set(Some(Ok(format!("Successfully imported {} items from JSON!", count))));
+                    status_message.set(Some(Ok(format!(
+                        "Successfully imported {} items from JSON!",
+                        count
+                    ))));
                     info!("Successfully imported {} items via JSON", count);
                 }
                 Err(e) => {
@@ -168,7 +171,10 @@ pub fn ImportModal(is_open: RwSignal<bool>, state: RwSignal<AppState>) -> impl I
                         s.collection = new_collection;
                         save_state_to_storage(s);
                     });
-                    status_message.set(Some(Ok(format!("Successfully imported {} items from CSV!", count))));
+                    status_message.set(Some(Ok(format!(
+                        "Successfully imported {} items from CSV!",
+                        count
+                    ))));
                     info!("Successfully imported {} items via CSV", count);
                 }
                 Err(e) => {
@@ -183,11 +189,15 @@ pub fn ImportModal(is_open: RwSignal<bool>, state: RwSignal<AppState>) -> impl I
                             let count = new_state.collection.items.len();
                             state.set(new_state.clone());
                             save_state_to_storage(&new_state);
-                            status_message.set(Some(Ok(format!("Successfully imported {} items from compressed BSON!", count))));
+                            status_message.set(Some(Ok(format!(
+                                "Successfully imported {} items from compressed BSON!",
+                                count
+                            ))));
                             info!("Successfully imported state via BSON");
                         }
                         Err(e) => {
-                            status_message.set(Some(Err(format!("BSON Deserialization Error: {}", e))));
+                            status_message
+                                .set(Some(Err(format!("BSON Deserialization Error: {}", e))));
                         }
                     },
                     Err(e) => {
@@ -302,8 +312,12 @@ pub fn ExportModal(is_open: RwSignal<bool>, state: RwSignal<AppState>) -> impl I
     let exported_content = Memo::new(move |_| {
         let current_state = state.get();
         match export_format.get() {
-            ExportFormat::Json => export_to_json(&current_state).unwrap_or_else(|e| format!("Error: {}", e)),
-            ExportFormat::Csv => export_to_csv(&current_state.collection).unwrap_or_else(|e| format!("Error: {}", e)),
+            ExportFormat::Json => {
+                export_to_json(&current_state).unwrap_or_else(|e| format!("Error: {}", e))
+            }
+            ExportFormat::Csv => {
+                export_to_csv(&current_state.collection).unwrap_or_else(|e| format!("Error: {}", e))
+            }
             ExportFormat::Bson => {
                 if let Ok(bytes) = export_to_compressed_bson(&current_state) {
                     use base64::Engine;
@@ -319,7 +333,10 @@ pub fn ExportModal(is_open: RwSignal<bool>, state: RwSignal<AppState>) -> impl I
         let text = exported_content.get();
         copy_to_clipboard(&text);
         copy_feedback.set(true);
-        set_timeout(move || copy_feedback.set(false), std::time::Duration::from_millis(2500));
+        set_timeout(
+            move || copy_feedback.set(false),
+            std::time::Duration::from_millis(2500),
+        );
     };
 
     let on_download = move |_| {

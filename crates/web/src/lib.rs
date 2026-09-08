@@ -25,7 +25,9 @@ pub fn main_js() {
             tracing::info!("Hydrating Serverless Leptos application from server-rendered HTML...");
             leptos::mount::hydrate_body(app::App);
         } else {
-            tracing::info!("Static HTML shell detected; mounting Serverless Leptos application via mount_to_body...");
+            tracing::info!(
+                "Static HTML shell detected; mounting Serverless Leptos application via mount_to_body..."
+            );
             leptos::mount::mount_to_body(app::App);
         }
     }

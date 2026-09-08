@@ -47,13 +47,21 @@ pub fn query_storage_diagnostics() -> StorageDiagnostics {
     #[cfg(target_arch = "wasm32")]
     {
         if let Some(window) = web_sys::window() {
-            if let Ok(val) = js_sys::Reflect::get(&window, &wasm_bindgen::JsValue::from_str("__pwaInstallAvailable")) {
+            if let Ok(val) = js_sys::Reflect::get(
+                &window,
+                &wasm_bindgen::JsValue::from_str("__pwaInstallAvailable"),
+            ) {
                 diag.pwa_install_available = val.as_bool().unwrap_or(false);
             }
-            if let Ok(val) = js_sys::Reflect::get(&window, &wasm_bindgen::JsValue::from_str("__pwaInstalled")) {
+            if let Ok(val) =
+                js_sys::Reflect::get(&window, &wasm_bindgen::JsValue::from_str("__pwaInstalled"))
+            {
                 diag.is_pwa_installed = val.as_bool().unwrap_or(false);
             }
-            if let Ok(val) = js_sys::Reflect::get(&window, &wasm_bindgen::JsValue::from_str("__storagePersisted")) {
+            if let Ok(val) = js_sys::Reflect::get(
+                &window,
+                &wasm_bindgen::JsValue::from_str("__storagePersisted"),
+            ) {
                 if let Some(b) = val.as_bool() {
                     diag.is_persisted = Some(b);
                 }
@@ -69,7 +77,10 @@ pub fn request_persistent_storage() {
     #[cfg(target_arch = "wasm32")]
     {
         if let Some(window) = web_sys::window() {
-            if let Ok(func) = js_sys::Reflect::get(&window, &wasm_bindgen::JsValue::from_str("__requestPersistentStorage")) {
+            if let Ok(func) = js_sys::Reflect::get(
+                &window,
+                &wasm_bindgen::JsValue::from_str("__requestPersistentStorage"),
+            ) {
                 if let Some(func) = func.dyn_ref::<js_sys::Function>() {
                     let _ = func.call0(&window);
                     info!("Triggered __requestPersistentStorage from Leptos");
@@ -84,7 +95,10 @@ pub fn trigger_pwa_install() {
     #[cfg(target_arch = "wasm32")]
     {
         if let Some(window) = web_sys::window() {
-            if let Ok(func) = js_sys::Reflect::get(&window, &wasm_bindgen::JsValue::from_str("__triggerPWAInstall")) {
+            if let Ok(func) = js_sys::Reflect::get(
+                &window,
+                &wasm_bindgen::JsValue::from_str("__triggerPWAInstall"),
+            ) {
                 if let Some(func) = func.dyn_ref::<js_sys::Function>() {
                     let _ = func.call0(&window);
                     info!("Triggered __triggerPWAInstall from Leptos");
@@ -130,13 +144,19 @@ pub fn save_state_to_storage(state: &AppState) -> StorageBackend {
                             return StorageBackend::LocalStorage;
                         }
                         Err(err) => {
-                            warn!("localStorage save failed: {:?}, migrating to IndexedDB", err);
+                            warn!(
+                                "localStorage save failed: {:?}, migrating to IndexedDB",
+                                err
+                            );
                         }
                     }
                 }
 
                 if local_storage_failed {
-                    if let Ok(func) = js_sys::Reflect::get(&window, &wasm_bindgen::JsValue::from_str("__saveToIndexedDB")) {
+                    if let Ok(func) = js_sys::Reflect::get(
+                        &window,
+                        &wasm_bindgen::JsValue::from_str("__saveToIndexedDB"),
+                    ) {
                         if let Some(func) = func.dyn_ref::<js_sys::Function>() {
                             let k = wasm_bindgen::JsValue::from_str(STORAGE_KEY_STATE);
                             let v = wasm_bindgen::JsValue::from_str(&json_str);
@@ -170,7 +190,8 @@ pub fn trigger_file_download(filename: &str, content: &str, mime_type: &str) {
                     Ok(blob) => {
                         if let Ok(url) = web_sys::Url::create_object_url_with_blob(&blob) {
                             if let Ok(element) = document.create_element("a") {
-                                if let Ok(anchor) = element.dyn_into::<web_sys::HtmlAnchorElement>() {
+                                if let Ok(anchor) = element.dyn_into::<web_sys::HtmlAnchorElement>()
+                                {
                                     anchor.set_href(&url);
                                     anchor.set_download(filename);
                                     anchor.click();
@@ -206,7 +227,9 @@ pub fn trigger_binary_download(filename: &str, bytes: &[u8], mime_type: &str) {
                 blob_parts.push(&uint8_array.buffer());
                 let blob_props = web_sys::BlobPropertyBag::new();
                 blob_props.set_type(mime_type);
-                if let Ok(blob) = web_sys::Blob::new_with_u8_array_sequence_and_options(&blob_parts, &blob_props) {
+                if let Ok(blob) =
+                    web_sys::Blob::new_with_u8_array_sequence_and_options(&blob_parts, &blob_props)
+                {
                     if let Ok(url) = web_sys::Url::create_object_url_with_blob(&blob) {
                         if let Ok(element) = document.create_element("a") {
                             if let Ok(anchor) = element.dyn_into::<web_sys::HtmlAnchorElement>() {
