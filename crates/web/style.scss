@@ -139,6 +139,16 @@ $theme-tokens: (
   }
 }
 
+// Global Accessible Touch Target Mixin (WCAG 2.5.5 AAA / 2.5.8 AA)
+@mixin touch-target-accessible {
+  min-width: 44px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
 // Global Accessible Focus Ring
 *:focus-visible {
   outline: var(--focus-ring-width, 2px) solid var(--focus-ring-color, #58a6ff);
@@ -252,6 +262,7 @@ html, body {
 
 .mobile-menu-toggle {
     display: none;
+    @include touch-target-accessible;
     background: none;
     border: 1px solid var(--border-color);
     color: var(--text-primary);
@@ -271,6 +282,9 @@ html, body {
 }
 
 .drawer-btn {
+    min-height: 44px;
+    display: flex;
+    align-items: center;
     text-align: left;
     padding: 0.6rem 0.8rem;
     background: var(--bg-surface-elevated);
@@ -280,6 +294,7 @@ html, body {
     font-size: 0.9rem;
     font-weight: 500;
     cursor: pointer;
+    box-sizing: border-box;
 }
 
 .drawer-btn-danger {
@@ -292,6 +307,7 @@ html, body {
 
 /* Navigation Buttons */
 .nav-btn {
+    @include touch-target-accessible;
     background: var(--bg-surface-elevated);
     border: 1px solid var(--border-color);
     color: var(--text-primary);
@@ -322,6 +338,7 @@ html, body {
 }
 
 .btn-theme-toggle {
+    @include touch-target-accessible;
     background: var(--bg-surface-elevated);
     border: 1px solid var(--border-color);
     color: var(--text-primary);
@@ -469,6 +486,7 @@ html, body {
 
 /* Buttons */
 .btn {
+    @include touch-target-accessible;
     padding: 0.55rem 1.1rem;
     border-radius: var(--radius-sm);
     font-size: 0.9rem;
@@ -476,9 +494,6 @@ html, body {
     cursor: pointer;
     border: 1px solid transparent;
     transition: var(--transition);
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
     gap: 0.4rem;
 }
 
@@ -673,6 +688,7 @@ html, body {
 .priority-critical { background: var(--danger-bg); color: var(--danger); }
 
 .btn-delete {
+    @include touch-target-accessible;
     background: none;
     border: none;
     cursor: pointer;
@@ -751,6 +767,7 @@ html, body {
 }
 
 .modal-close-btn {
+    @include touch-target-accessible;
     background: none;
     border: none;
     color: var(--text-secondary);
@@ -783,6 +800,7 @@ html, body {
 }
 
 .tab-btn {
+    @include touch-target-accessible;
     padding: 0.4rem 0.8rem;
     background: var(--bg-surface-elevated);
     border: 1px solid var(--border-color);
