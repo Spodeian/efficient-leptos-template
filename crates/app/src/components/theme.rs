@@ -12,13 +12,11 @@ pub fn apply_document_theme(_theme: ThemeMode) {
         if let Some(window) = web_sys::window() {
             if let Some(doc) = window.document() {
                 if let Some(html) = doc.document_element() {
-                    let theme_str = if theme.is_dark() { "dark" } else { "light" };
-                    let _ = html.set_attribute("data-theme", theme_str);
+                    let _ = html.set_attribute("data-theme", theme.as_str());
                 }
             }
             if let Ok(Some(storage)) = window.local_storage() {
-                let theme_str = if theme.is_dark() { "dark" } else { "light" };
-                let _ = storage.set_item(crate::storage::STORAGE_KEY_THEME, theme_str);
+                let _ = storage.set_item(crate::storage::STORAGE_KEY_THEME, theme.as_str());
             }
         }
     }
@@ -31,9 +29,7 @@ pub fn get_initial_theme() -> ThemeMode {
         if let Some(window) = web_sys::window() {
             if let Ok(Some(storage)) = window.local_storage() {
                 if let Ok(Some(val)) = storage.get_item(crate::storage::STORAGE_KEY_THEME) {
-                    if val == "light" {
-                        return ThemeMode::Light;
-                    }
+                    return ThemeMode::from_str(&val);
                 }
             }
         }
@@ -44,7 +40,7 @@ pub fn get_initial_theme() -> ThemeMode {
 #[component]
 pub fn ThemeToggle(theme: RwSignal<ThemeMode>) -> impl IntoView {
     let on_toggle = move |_| {
-        let new_theme = theme.get().toggle();
+        let new_theme = theme.get().next();
         theme.set(new_theme);
         apply_document_theme(new_theme);
         info!("Theme switched to: {:?}", new_theme);
@@ -54,14 +50,15 @@ pub fn ThemeToggle(theme: RwSignal<ThemeMode>) -> impl IntoView {
         <button
             class="btn-theme-toggle"
             on:click=on_toggle
-            title=move || if theme.get().is_dark() { "Switch to Warm Light Mode" } else { "Switch to Dark Mode" }
-            aria-label="Toggle Theme"
+            title=move || format!("Theme: {}. Click to switch theme.", theme.get().display_label())
+            aria-label=move || format!("Theme selector. Currently set to {}.", theme.get().display_label())
         >
-            {move || if theme.get().is_dark() {
-                "Light Mode"
-            } else {
-                "Dark Mode"
-            }}
+            <span class="theme-icon">
+                {move || theme.get().icon()}
+            </span>
+            <span class="theme-label">
+                {move || theme.get().display_label()}
+            </span>
         </button>
     }
 }

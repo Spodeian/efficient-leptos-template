@@ -6,6 +6,20 @@
     <meta name="theme-color" content="#0d1117" />
     <meta name="description" content="Modern, high-performance Serverless WebAssembly & Native Desktop application built with Rust and Leptos 0.8" />
 
+    <!-- Theme initialization (prevents FOUC) -->
+    <script>
+        (function () {
+            try {
+                var t = localStorage.getItem('serverless_leptos_theme');
+                if (t === 'light' || t === 'high-contrast-dark' || t === 'high-contrast-light') {
+                    document.documentElement.setAttribute('data-theme', t);
+                } else {
+                    document.documentElement.setAttribute('data-theme', 'dark');
+                }
+            } catch (e) {}
+        })();
+    </script>
+
     <!-- Open Graph & Social Cards -->
     <meta property="og:title" content="Leptos Serverless & Desktop Template" />
     <meta property="og:description" content="Production-ready, modular Rust & Leptos template for Serverless Pages and Native Desktop." />
