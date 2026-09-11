@@ -57,14 +57,12 @@ pub fn ThemeToggle(
             class="btn-theme-toggle"
             on:click=on_toggle
             title=move || format!("Theme: {}. Click to switch theme.", theme.get().display_label())
-            aria-label=move || format!("Theme selector. Currently set to {}.", theme.get().display_label())
+            aria-label=move || {
+                format!("Theme selector. Currently set to {}.", theme.get().display_label())
+            }
         >
-            <span class="theme-icon">
-                {move || theme.get().icon()}
-            </span>
-            <span class="theme-label">
-                {move || theme.get().display_label()}
-            </span>
+            <span class="theme-icon">{move || theme.get().icon()}</span>
+            <span class="theme-label">{move || theme.get().display_label()}</span>
         </button>
     }
 }
@@ -134,9 +132,21 @@ pub fn DyslexiaToggle(
         <button
             class="btn-theme-toggle btn-dyslexia-toggle"
             on:click=on_toggle
-            title=move || if dyslexia.get() { "Dyslexia font enabled. Click to return to standard font." } else { "Click to enable dyslexia-friendly font." }
+            title=move || {
+                if dyslexia.get() {
+                    "Dyslexia font enabled. Click to return to standard font."
+                } else {
+                    "Click to enable dyslexia-friendly font."
+                }
+            }
             aria-pressed=move || if dyslexia.get() { "true" } else { "false" }
-            aria-label=move || if dyslexia.get() { "Dyslexia-friendly font enabled. Click to disable." } else { "Dyslexia-friendly font disabled. Click to enable." }
+            aria-label=move || {
+                if dyslexia.get() {
+                    "Dyslexia-friendly font enabled. Click to disable."
+                } else {
+                    "Dyslexia-friendly font disabled. Click to enable."
+                }
+            }
         >
             <span class="theme-icon">"🔤"</span>
             <span class="theme-label">

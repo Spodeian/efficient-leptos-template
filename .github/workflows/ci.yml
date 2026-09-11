@@ -20,8 +20,12 @@ jobs:
         with:
           components: rustfmt, clippy
       - uses: Swatinem/rust-cache@v2
-      - name: Check Formatting
+      - name: Check Formatting (Rustfmt)
         run: cargo fmt --all -- --check
+      - name: Install Leptosfmt
+        uses: taiki-e/install-action@leptosfmt
+      - name: Check Leptos Formatting (Leptosfmt)
+        run: leptosfmt --check crates
       - name: Clippy Linter
         run: cargo clippy --workspace --exclude desktop --all-targets --all-features -- -D warnings
 

@@ -102,39 +102,91 @@ pub fn App() -> impl IntoView {
                     let d = diag.get();
                     let is_ephemeral = d.is_persisted == Some(false);
                     let is_quota = d.quota_exceeded;
-
                     if is_ephemeral && is_quota && !dismissed_combined.get() {
+
                         view! {
-                            <div class="banner-alert banner-danger" style="margin-bottom: 12px; padding: 10px 14px; background: rgba(218, 54, 51, 0.2); border: 1px solid var(--danger); border-radius: 8px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
-                                <span><strong>"Storage Alert:"</strong> " Storage is Ephemeral AND Quota Limit Exceeded!"</span>
+                            <div
+                                class="banner-alert banner-danger"
+                                style="margin-bottom: 12px; padding: 10px 14px; background: rgba(218, 54, 51, 0.2); border: 1px solid var(--danger); border-radius: 8px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;"
+                            >
+                                <span>
+                                    <strong>"Storage Alert:"</strong>
+                                    " Storage is Ephemeral AND Quota Limit Exceeded!"
+                                </span>
                                 <div style="display: flex; gap: 6px;">
-                                    <button class="btn btn-sm btn-primary" on:click=on_backup_bson>"Save .bson Backup"</button>
-                                    <button class="btn btn-sm btn-outline" on:click=move |_| request_persistent_storage()>"Request Permission"</button>
-                                    <button class="btn btn-sm btn-secondary" on:click=move |_| dismissed_combined.set(true)>"Dismiss"</button>
+                                    <button class="btn btn-sm btn-primary" on:click=on_backup_bson>
+                                        "Save .bson Backup"
+                                    </button>
+                                    <button
+                                        class="btn btn-sm btn-outline"
+                                        on:click=move |_| request_persistent_storage()
+                                    >
+                                        "Request Permission"
+                                    </button>
+                                    <button
+                                        class="btn btn-sm btn-secondary"
+                                        on:click=move |_| dismissed_combined.set(true)
+                                    >
+                                        "Dismiss"
+                                    </button>
                                 </div>
                             </div>
-                        }.into_any()
+                        }
+                            .into_any()
                     } else if is_ephemeral && !dismissed_ephemeral.get() {
                         view! {
-                            <div class="banner-alert banner-warning" style="margin-bottom: 12px; padding: 10px 14px; background: rgba(210, 153, 34, 0.2); border: 1px solid var(--warning); border-radius: 8px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
-                                <span><strong>"Ephemeral Storage:"</strong> " Browser may clear local data under storage pressure."</span>
+                            <div
+                                class="banner-alert banner-warning"
+                                style="margin-bottom: 12px; padding: 10px 14px; background: rgba(210, 153, 34, 0.2); border: 1px solid var(--warning); border-radius: 8px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;"
+                            >
+                                <span>
+                                    <strong>"Ephemeral Storage:"</strong>
+                                    " Browser may clear local data under storage pressure."
+                                </span>
                                 <div style="display: flex; gap: 6px;">
-                                    <button class="btn btn-sm btn-primary" on:click=on_backup_bson>"Backup .bson"</button>
-                                    <button class="btn btn-sm btn-outline" on:click=move |_| request_persistent_storage()>"Request Persistence"</button>
-                                    <button class="btn btn-sm btn-secondary" on:click=move |_| dismissed_ephemeral.set(true)>"Dismiss"</button>
+                                    <button class="btn btn-sm btn-primary" on:click=on_backup_bson>
+                                        "Backup .bson"
+                                    </button>
+                                    <button
+                                        class="btn btn-sm btn-outline"
+                                        on:click=move |_| request_persistent_storage()
+                                    >
+                                        "Request Persistence"
+                                    </button>
+                                    <button
+                                        class="btn btn-sm btn-secondary"
+                                        on:click=move |_| dismissed_ephemeral.set(true)
+                                    >
+                                        "Dismiss"
+                                    </button>
                                 </div>
                             </div>
-                        }.into_any()
+                        }
+                            .into_any()
                     } else if is_quota && !dismissed_quota.get() {
                         view! {
-                            <div class="banner-alert banner-warning" style="margin-bottom: 12px; padding: 10px 14px; background: rgba(210, 153, 34, 0.2); border: 1px solid var(--warning); border-radius: 8px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
-                                <span><strong>"Quota Exceeded:"</strong> " Data migrated to IndexedDB fallback tier."</span>
+                            <div
+                                class="banner-alert banner-warning"
+                                style="margin-bottom: 12px; padding: 10px 14px; background: rgba(210, 153, 34, 0.2); border: 1px solid var(--warning); border-radius: 8px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;"
+                            >
+                                <span>
+                                    <strong>"Quota Exceeded:"</strong>
+                                    " Data migrated to IndexedDB fallback tier."
+                                </span>
                                 <div style="display: flex; gap: 6px;">
-                                    <button class="btn btn-sm btn-primary" on:click=on_backup_bson>"Save .bson Backup"</button>
-                                    <button class="btn btn-sm btn-secondary" on:click=move |_| dismissed_quota.set(true)>"Dismiss"</button>
+                                    <button class="btn btn-sm btn-primary" on:click=on_backup_bson>
+                                        "Save .bson Backup"
+                                    </button>
+                                    <button
+                                        class="btn btn-sm btn-secondary"
+                                        on:click=move |_| dismissed_quota.set(true)
+                                    >
+                                        "Dismiss"
+                                    </button>
                                 </div>
                             </div>
-                        }.into_any()
+                        }
+                            .into_any()
                     } else {
                         view! {}.into_any()
                     }
@@ -146,12 +198,15 @@ pub fn App() -> impl IntoView {
             <footer class="app-footer">
                 <div class="footer-container">
                     <p>
-                        "Built with "
-                        <strong>"Rust & Leptos 0.8"</strong>
+                        "Built with " <strong>"Rust & Leptos 0.8"</strong>
                         " • Serverless WASM (Cloudflare Pages) & Native Desktop (Tauri v2)"
                     </p>
                     <div class="footer-links">
-                        <a href="https://github.com/Spodeian/Revisited-IPIP-NEO" target="_blank" rel="noopener noreferrer">
+                        <a
+                            href="https://github.com/Spodeian/Revisited-IPIP-NEO"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                        >
                             "Inspired by Revisited IPIP-NEO"
                         </a>
                         <span class="footer-dot">"•"</span>
@@ -167,7 +222,11 @@ pub fn App() -> impl IntoView {
             <HelpModal is_open=show_help_modal />
             <ImportModal is_open=show_import_modal state=state />
             <ExportModal is_open=show_export_modal state=state />
-            <StorageModal is_open=show_storage_modal show_import_modal=show_import_modal state=state />
+            <StorageModal
+                is_open=show_storage_modal
+                show_import_modal=show_import_modal
+                state=state
+            />
         </div>
     }
 }
