@@ -43,6 +43,9 @@ pub fn App() -> impl IntoView {
     let dismissed_quota = RwSignal::new(false);
     let dismissed_combined = RwSignal::new(false);
 
+    // Screen reader live announcements (WCAG 4.1.3)
+    let announcement = RwSignal::new(String::new());
+
     let diag = Memo::new(move |_| query_storage_diagnostics());
 
     // Global keyboard listener for Escape key to close modals
@@ -66,6 +69,16 @@ pub fn App() -> impl IntoView {
 
     view! {
         <div class="app-root" on:keydown=on_keydown tabindex="0">
+            // Accessible Skip Link for Keyboard Navigation (WCAG 2.4.1)
+            <a href="#main-content" class="skip-to-content">
+                "Skip to main content"
+            </a>
+
+            // ARIA Live Region for Screen Reader Announcements (WCAG 4.1.3)
+            <div role="status" aria-live="polite" aria-atomic="true" class="sr-only">
+                {move || announcement.get()}
+            </div>
+
             <Navbar
                 theme=theme
                 show_reset_modal=show_reset_modal
@@ -74,9 +87,10 @@ pub fn App() -> impl IntoView {
                 show_export_modal=show_export_modal
                 show_storage_modal=show_storage_modal
                 mobile_menu_open=mobile_menu_open
+                announcement=announcement
             />
 
-            <main class="main-wrapper">
+            <main id="main-content" class="main-wrapper" tabindex="-1">
                 // Diagnostics / Warning Banners
                 {move || {
                     let d = diag.get();
@@ -120,7 +134,7 @@ pub fn App() -> impl IntoView {
                     }
                 }}
 
-                <ItemList state=state />
+                <ItemList state=state announcement=announcement />
             </main>
 
             <footer class="app-footer">

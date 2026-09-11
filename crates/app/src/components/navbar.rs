@@ -14,6 +14,7 @@ pub fn Navbar(
     show_export_modal: RwSignal<bool>,
     show_storage_modal: RwSignal<bool>,
     mobile_menu_open: RwSignal<bool>,
+    #[prop(optional)] announcement: Option<RwSignal<String>>,
 ) -> impl IntoView {
     let toggle_mobile_menu = move |_| {
         mobile_menu_open.update(|open| *open = !*open);
@@ -74,7 +75,11 @@ pub fn Navbar(
                     <button class="nav-btn nav-btn-danger" on:click=move |_| show_reset_modal.set(true)>
                         "Reset"
                     </button>
-                    <ThemeToggle theme=theme />
+                    {if let Some(ann) = announcement {
+                        view! { <ThemeToggle theme=theme announcement=ann /> }.into_any()
+                    } else {
+                        view! { <ThemeToggle theme=theme /> }.into_any()
+                    }}
                 </nav>
 
                 <button
@@ -136,7 +141,11 @@ pub fn Navbar(
                             "Reset State"
                         </button>
                         <div class="drawer-theme">
-                            <ThemeToggle theme=theme />
+                            {if let Some(ann) = announcement {
+                                view! { <ThemeToggle theme=theme announcement=ann /> }.into_any()
+                            } else {
+                                view! { <ThemeToggle theme=theme /> }.into_any()
+                            }}
                         </div>
                     </div>
                 }.into_any()

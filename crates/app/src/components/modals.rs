@@ -11,6 +11,42 @@ use shared::{
 };
 use tracing::info;
 
+/// Helper to trap Tab navigation inside modal dialogs (WCAG 2.4.3).
+#[allow(unused_variables)]
+pub fn handle_modal_tab_trap(
+    ev: &web_sys::KeyboardEvent,
+    first_el: Option<&web_sys::HtmlElement>,
+    last_el: Option<&web_sys::HtmlElement>,
+) {
+    if ev.key() == "Tab" {
+        #[cfg(target_arch = "wasm32")]
+        {
+            if let Some(doc) = web_sys::window().and_then(|w| w.document()) {
+                let active = doc.active_element();
+                if ev.shift_key() {
+                    if let (Some(active), Some(first)) = (active.as_ref(), first_el) {
+                        if first.is_same_node(Some(active.as_ref())) {
+                            ev.prevent_default();
+                            if let Some(last) = last_el {
+                                let _ = last.focus();
+                            }
+                        }
+                    }
+                } else {
+                    if let (Some(active), Some(last)) = (active.as_ref(), last_el) {
+                        if last.is_same_node(Some(active.as_ref())) {
+                            ev.prevent_default();
+                            if let Some(first) = first_el {
+                                let _ = first.focus();
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
 #[component]
 pub fn ResetModal(is_open: RwSignal<bool>, state: RwSignal<AppState>) -> impl IntoView {
     let confirm_reset = move |_| {
@@ -25,24 +61,55 @@ pub fn ResetModal(is_open: RwSignal<bool>, state: RwSignal<AppState>) -> impl In
         is_open.set(false);
     };
 
+    let cancel_btn_ref = NodeRef::<leptos::html::Button>::new();
+    let reset_btn_ref = NodeRef::<leptos::html::Button>::new();
+
+    // Auto-focus Cancel button on open for safe default
+    Effect::new(move |_| {
+        if is_open.get() {
+            if let Some(btn) = cancel_btn_ref.get() {
+                let _ = btn.focus();
+            }
+        }
+    });
+
+    let on_dialog_keydown = move |ev: web_sys::KeyboardEvent| {
+        if ev.key() == "Escape" {
+            ev.stop_propagation();
+            is_open.set(false);
+        } else {
+            let first = cancel_btn_ref.get();
+            let last = reset_btn_ref.get();
+            handle_modal_tab_trap(&ev, first.as_deref(), last.as_deref());
+        }
+    };
+
     view! {
         {move || if is_open.get() {
             view! {
                 <div class="modal-backdrop" on:click=close_modal>
-                    <div class="modal-card" on:click=move |ev| ev.stop_propagation()>
+                    <div
+                        class="modal-card"
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="reset-modal-title"
+                        tabindex="-1"
+                        on:click=move |ev| ev.stop_propagation()
+                        on:keydown=on_dialog_keydown
+                    >
                         <div class="modal-header">
-                            <h3 class="modal-title">"Reset Application State"</h3>
-                            <button class="modal-close-btn" on:click=close_modal>"✕"</button>
+                            <h3 id="reset-modal-title" class="modal-title">"Reset Application State"</h3>
+                            <button class="modal-close-btn" on:click=close_modal aria-label="Close dialog">"✕"</button>
                         </div>
                         <div class="modal-body">
                             <p>"Are you sure you want to reset all tasks and configuration to the default sample dataset?"</p>
                             <p class="text-warning">"Any custom items and changes will be replaced in local browser storage."</p>
                         </div>
                         <div class="modal-footer">
-                            <button class="btn btn-secondary" on:click=close_modal>
+                            <button node_ref=cancel_btn_ref class="btn btn-secondary" on:click=close_modal>
                                 "Cancel"
                             </button>
-                            <button class="btn btn-danger" on:click=confirm_reset>
+                            <button node_ref=reset_btn_ref class="btn btn-danger" on:click=confirm_reset>
                                 "Yes, Reset Everything"
                             </button>
                         </div>
@@ -61,14 +128,44 @@ pub fn HelpModal(is_open: RwSignal<bool>) -> impl IntoView {
         is_open.set(false);
     };
 
+    let close_btn_ref = NodeRef::<leptos::html::Button>::new();
+    let got_it_btn_ref = NodeRef::<leptos::html::Button>::new();
+
+    Effect::new(move |_| {
+        if is_open.get() {
+            if let Some(btn) = close_btn_ref.get() {
+                let _ = btn.focus();
+            }
+        }
+    });
+
+    let on_dialog_keydown = move |ev: web_sys::KeyboardEvent| {
+        if ev.key() == "Escape" {
+            ev.stop_propagation();
+            is_open.set(false);
+        } else {
+            let first = close_btn_ref.get();
+            let last = got_it_btn_ref.get();
+            handle_modal_tab_trap(&ev, first.as_deref(), last.as_deref());
+        }
+    };
+
     view! {
         {move || if is_open.get() {
             view! {
                 <div class="modal-backdrop" on:click=close_modal>
-                    <div class="modal-card modal-large" on:click=move |ev| ev.stop_propagation()>
+                    <div
+                        class="modal-card modal-large"
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="help-modal-title"
+                        tabindex="-1"
+                        on:click=move |ev| ev.stop_propagation()
+                        on:keydown=on_dialog_keydown
+                    >
                         <div class="modal-header">
-                            <h3 class="modal-title">"Architecture & Help Guide • " {concat!("v", env!("CARGO_PKG_VERSION"))}</h3>
-                            <button class="modal-close-btn" on:click=close_modal>"✕"</button>
+                            <h3 id="help-modal-title" class="modal-title">"Architecture & Help Guide • " {concat!("v", env!("CARGO_PKG_VERSION"))}</h3>
+                            <button node_ref=close_btn_ref class="modal-close-btn" on:click=close_modal aria-label="Close dialog">"✕"</button>
                         </div>
                         <div class="modal-body help-content">
                             <section class="help-section">
@@ -108,7 +205,7 @@ pub fn HelpModal(is_open: RwSignal<bool>) -> impl IntoView {
                             </section>
                         </div>
                         <div class="modal-footer">
-                            <button class="btn btn-primary" on:click=close_modal>
+                            <button node_ref=got_it_btn_ref class="btn btn-primary" on:click=close_modal>
                                 "Got it"
                             </button>
                         </div>
@@ -139,6 +236,28 @@ pub fn ImportModal(is_open: RwSignal<bool>, state: RwSignal<AppState>) -> impl I
         is_open.set(false);
         raw_text.set(String::new());
         status_message.set(None);
+    };
+
+    let close_btn_ref = NodeRef::<leptos::html::Button>::new();
+    let import_btn_ref = NodeRef::<leptos::html::Button>::new();
+
+    Effect::new(move |_| {
+        if is_open.get() {
+            if let Some(btn) = close_btn_ref.get() {
+                let _ = btn.focus();
+            }
+        }
+    });
+
+    let on_dialog_keydown = move |ev: web_sys::KeyboardEvent| {
+        if ev.key() == "Escape" {
+            ev.stop_propagation();
+            is_open.set(false);
+        } else {
+            let first = close_btn_ref.get();
+            let last = import_btn_ref.get();
+            handle_modal_tab_trap(&ev, first.as_deref(), last.as_deref());
+        }
     };
 
     let do_import = move |_| {
@@ -212,10 +331,18 @@ pub fn ImportModal(is_open: RwSignal<bool>, state: RwSignal<AppState>) -> impl I
         {move || if is_open.get() {
             view! {
                 <div class="modal-backdrop" on:click=close_modal>
-                    <div class="modal-card modal-large" on:click=move |ev| ev.stop_propagation()>
+                    <div
+                        class="modal-card modal-large"
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="import-modal-title"
+                        tabindex="-1"
+                        on:click=move |ev| ev.stop_propagation()
+                        on:keydown=on_dialog_keydown
+                    >
                         <div class="modal-header">
-                            <h3 class="modal-title">"Import Data"</h3>
-                            <button class="modal-close-btn" on:click=close_modal>"✕"</button>
+                            <h3 id="import-modal-title" class="modal-title">"Import Data"</h3>
+                            <button node_ref=close_btn_ref class="modal-close-btn" on:click=close_modal aria-label="Close dialog">"✕"</button>
                         </div>
                         <div class="modal-body">
                             <div class="format-toggle-bar">
@@ -278,7 +405,7 @@ pub fn ImportModal(is_open: RwSignal<bool>, state: RwSignal<AppState>) -> impl I
                             <button class="btn btn-secondary" on:click=close_modal>
                                 "Close"
                             </button>
-                            <button class="btn btn-primary" on:click=do_import>
+                            <button node_ref=import_btn_ref class="btn btn-primary" on:click=do_import>
                                 "Import & Apply"
                             </button>
                         </div>
@@ -307,6 +434,28 @@ pub fn ExportModal(is_open: RwSignal<bool>, state: RwSignal<AppState>) -> impl I
     let close_modal = move |_| {
         is_open.set(false);
         copy_feedback.set(false);
+    };
+
+    let close_btn_ref = NodeRef::<leptos::html::Button>::new();
+    let download_btn_ref = NodeRef::<leptos::html::Button>::new();
+
+    Effect::new(move |_| {
+        if is_open.get() {
+            if let Some(btn) = close_btn_ref.get() {
+                let _ = btn.focus();
+            }
+        }
+    });
+
+    let on_dialog_keydown = move |ev: web_sys::KeyboardEvent| {
+        if ev.key() == "Escape" {
+            ev.stop_propagation();
+            is_open.set(false);
+        } else {
+            let first = close_btn_ref.get();
+            let last = download_btn_ref.get();
+            handle_modal_tab_trap(&ev, first.as_deref(), last.as_deref());
+        }
     };
 
     let exported_content = Memo::new(move |_| {
@@ -362,10 +511,18 @@ pub fn ExportModal(is_open: RwSignal<bool>, state: RwSignal<AppState>) -> impl I
         {move || if is_open.get() {
             view! {
                 <div class="modal-backdrop" on:click=close_modal>
-                    <div class="modal-card modal-large" on:click=move |ev| ev.stop_propagation()>
+                    <div
+                        class="modal-card modal-large"
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="export-modal-title"
+                        tabindex="-1"
+                        on:click=move |ev| ev.stop_propagation()
+                        on:keydown=on_dialog_keydown
+                    >
                         <div class="modal-header">
-                            <h3 class="modal-title">"Export Data"</h3>
-                            <button class="modal-close-btn" on:click=close_modal>"✕"</button>
+                            <h3 id="export-modal-title" class="modal-title">"Export Data"</h3>
+                            <button node_ref=close_btn_ref class="modal-close-btn" on:click=close_modal aria-label="Close dialog">"✕"</button>
                         </div>
                         <div class="modal-body">
                             <div class="format-toggle-bar">
@@ -409,7 +566,7 @@ pub fn ExportModal(is_open: RwSignal<bool>, state: RwSignal<AppState>) -> impl I
                             <button class="btn btn-outline" on:click=on_copy>
                                 "Copy to Clipboard"
                             </button>
-                            <button class="btn btn-primary" on:click=on_download>
+                            <button node_ref=download_btn_ref class="btn btn-primary" on:click=on_download>
                                 "Download File"
                             </button>
                         </div>
@@ -432,6 +589,28 @@ pub fn StorageModal(
 
     let close_modal = move |_| {
         is_open.set(false);
+    };
+
+    let close_btn_ref = NodeRef::<leptos::html::Button>::new();
+    let footer_close_btn_ref = NodeRef::<leptos::html::Button>::new();
+
+    Effect::new(move |_| {
+        if is_open.get() {
+            if let Some(btn) = close_btn_ref.get() {
+                let _ = btn.focus();
+            }
+        }
+    });
+
+    let on_dialog_keydown = move |ev: web_sys::KeyboardEvent| {
+        if ev.key() == "Escape" {
+            ev.stop_propagation();
+            is_open.set(false);
+        } else {
+            let first = close_btn_ref.get();
+            let last = footer_close_btn_ref.get();
+            handle_modal_tab_trap(&ev, first.as_deref(), last.as_deref());
+        }
     };
 
     let on_request_persistence = move |_| {
@@ -467,10 +646,18 @@ pub fn StorageModal(
 
             view! {
                 <div class="modal-backdrop" on:click=close_modal>
-                    <div class="modal-card modal-large" on:click=move |ev| ev.stop_propagation()>
+                    <div
+                        class="modal-card modal-large"
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="storage-modal-title"
+                        tabindex="-1"
+                        on:click=move |ev| ev.stop_propagation()
+                        on:keydown=on_dialog_keydown
+                    >
                         <div class="modal-header">
-                            <h3 class="modal-title">"Storage & Data Management"</h3>
-                            <button class="modal-close-btn" on:click=close_modal>"✕"</button>
+                            <h3 id="storage-modal-title" class="modal-title">"Storage & Data Management"</h3>
+                            <button node_ref=close_btn_ref class="modal-close-btn" on:click=close_modal aria-label="Close dialog">"✕"</button>
                         </div>
                         <div class="modal-body">
                             <div class="storage-diag-section">
@@ -518,7 +705,7 @@ pub fn StorageModal(
                             </div>
                         </div>
                         <div class="modal-footer">
-                            <button class="btn btn-secondary" on:click=close_modal>
+                            <button node_ref=footer_close_btn_ref class="btn btn-secondary" on:click=close_modal>
                                 "Close"
                             </button>
                         </div>

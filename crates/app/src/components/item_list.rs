@@ -5,7 +5,10 @@ use leptos::prelude::*;
 use shared::{AppState, Item, Priority};
 
 #[component]
-pub fn ItemList(state: RwSignal<AppState>) -> impl IntoView {
+pub fn ItemList(
+    state: RwSignal<AppState>,
+    #[prop(optional)] announcement: Option<RwSignal<String>>,
+) -> impl IntoView {
     let new_title = RwSignal::new(String::new());
     let new_description = RwSignal::new(String::new());
     let new_priority = RwSignal::new(Priority::Medium);
@@ -26,7 +29,7 @@ pub fn ItemList(state: RwSignal<AppState>) -> impl IntoView {
         let id = format!("item-{}", js_sys_time());
         let item = Item {
             id,
-            title,
+            title: title.clone(),
             description: desc,
             priority,
             completed: false,
@@ -38,23 +41,44 @@ pub fn ItemList(state: RwSignal<AppState>) -> impl IntoView {
             save_state_to_storage(s);
         });
 
+        if let Some(announcer) = announcement {
+            announcer.set(format!("Added new task: {title}"));
+        }
+
         new_title.set(String::new());
         new_description.set(String::new());
         new_priority.set(Priority::Medium);
     };
 
     let toggle_item = move |id: String| {
+        let mut completed_state = false;
+        let mut item_title = String::new();
         state.update(|s| {
-            s.collection.toggle_completed(&id);
+            if let Some(item) = s.collection.items.iter_mut().find(|i| i.id == id) {
+                item.completed = !item.completed;
+                completed_state = item.completed;
+                item_title = item.title.clone();
+            }
             save_state_to_storage(s);
         });
+        if let Some(announcer) = announcement {
+            let status = if completed_state { "completed" } else { "marked pending" };
+            announcer.set(format!("Task {status}: {item_title}"));
+        }
     };
 
     let remove_item = move |id: String| {
+        let mut item_title = String::new();
         state.update(|s| {
-            s.collection.remove(&id);
+            if let Some(pos) = s.collection.items.iter().position(|i| i.id == id) {
+                item_title = s.collection.items[pos].title.clone();
+                s.collection.items.remove(pos);
+            }
             save_state_to_storage(s);
         });
+        if let Some(announcer) = announcement {
+            announcer.set(format!("Deleted task: {item_title}"));
+        }
     };
 
     // Filtered items memo

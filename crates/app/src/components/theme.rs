@@ -38,11 +38,17 @@ pub fn get_initial_theme() -> ThemeMode {
 }
 
 #[component]
-pub fn ThemeToggle(theme: RwSignal<ThemeMode>) -> impl IntoView {
+pub fn ThemeToggle(
+    theme: RwSignal<ThemeMode>,
+    #[prop(optional)] announcement: Option<RwSignal<String>>,
+) -> impl IntoView {
     let on_toggle = move |_| {
         let new_theme = theme.get().next();
         theme.set(new_theme);
         apply_document_theme(new_theme);
+        if let Some(announcer) = announcement {
+            announcer.set(format!("Theme changed to {}", new_theme.display_label()));
+        }
         info!("Theme switched to: {:?}", new_theme);
     };
 
