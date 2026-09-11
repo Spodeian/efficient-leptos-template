@@ -84,7 +84,10 @@ pub fn apply_document_dyslexia(_enabled: bool) {
                 }
             }
             if let Ok(Some(storage)) = window.local_storage() {
-                let _ = storage.set_item(crate::storage::STORAGE_KEY_DYSLEXIA, if _enabled { "true" } else { "false" });
+                let _ = storage.set_item(
+                    crate::storage::STORAGE_KEY_DYSLEXIA,
+                    if _enabled { "true" } else { "false" },
+                );
             }
         }
     }
@@ -118,7 +121,8 @@ pub fn DyslexiaToggle(
         apply_document_dyslexia(new_val);
         if let Some(announcer) = announcement {
             announcer.set(if new_val {
-                "Dyslexia-friendly typography enabled: Atkinson Hyperlegible with enhanced spacing".to_string()
+                "Dyslexia-friendly typography enabled: Atkinson Hyperlegible with enhanced spacing"
+                    .to_string()
             } else {
                 "Dyslexia-friendly typography disabled".to_string()
             });
@@ -141,4 +145,3 @@ pub fn DyslexiaToggle(
         </button>
     }
 }
-

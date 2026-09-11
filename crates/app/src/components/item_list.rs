@@ -62,7 +62,11 @@ pub fn ItemList(
             save_state_to_storage(s);
         });
         if let Some(announcer) = announcement {
-            let status = if completed_state { "completed" } else { "marked pending" };
+            let status = if completed_state {
+                "completed"
+            } else {
+                "marked pending"
+            };
             announcer.set(format!("Task {status}: {item_title}"));
         }
     };

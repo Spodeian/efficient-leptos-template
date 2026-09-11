@@ -66,10 +66,8 @@ pub fn ResetModal(is_open: RwSignal<bool>, state: RwSignal<AppState>) -> impl In
 
     // Auto-focus Cancel button on open for safe default
     Effect::new(move |_| {
-        if is_open.get() {
-            if let Some(btn) = cancel_btn_ref.get() {
-                let _ = btn.focus();
-            }
+        if let (true, Some(btn)) = (is_open.get(), cancel_btn_ref.get()) {
+            let _ = btn.focus();
         }
     });
 
@@ -132,10 +130,8 @@ pub fn HelpModal(is_open: RwSignal<bool>) -> impl IntoView {
     let got_it_btn_ref = NodeRef::<leptos::html::Button>::new();
 
     Effect::new(move |_| {
-        if is_open.get() {
-            if let Some(btn) = close_btn_ref.get() {
-                let _ = btn.focus();
-            }
+        if let (true, Some(btn)) = (is_open.get(), close_btn_ref.get()) {
+            let _ = btn.focus();
         }
     });
 
@@ -242,10 +238,8 @@ pub fn ImportModal(is_open: RwSignal<bool>, state: RwSignal<AppState>) -> impl I
     let import_btn_ref = NodeRef::<leptos::html::Button>::new();
 
     Effect::new(move |_| {
-        if is_open.get() {
-            if let Some(btn) = close_btn_ref.get() {
-                let _ = btn.focus();
-            }
+        if let (true, Some(btn)) = (is_open.get(), close_btn_ref.get()) {
+            let _ = btn.focus();
         }
     });
 
@@ -440,10 +434,8 @@ pub fn ExportModal(is_open: RwSignal<bool>, state: RwSignal<AppState>) -> impl I
     let download_btn_ref = NodeRef::<leptos::html::Button>::new();
 
     Effect::new(move |_| {
-        if is_open.get() {
-            if let Some(btn) = close_btn_ref.get() {
-                let _ = btn.focus();
-            }
+        if let (true, Some(btn)) = (is_open.get(), close_btn_ref.get()) {
+            let _ = btn.focus();
         }
     });
 
@@ -595,10 +587,8 @@ pub fn StorageModal(
     let footer_close_btn_ref = NodeRef::<leptos::html::Button>::new();
 
     Effect::new(move |_| {
-        if is_open.get() {
-            if let Some(btn) = close_btn_ref.get() {
-                let _ = btn.focus();
-            }
+        if let (true, Some(btn)) = (is_open.get(), close_btn_ref.get()) {
+            let _ = btn.focus();
         }
     });
 

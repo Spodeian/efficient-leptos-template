@@ -49,6 +49,7 @@ impl ThemeMode {
     }
 
     #[must_use]
+    #[allow(clippy::should_implement_trait)]
     pub fn from_str(s: &str) -> Self {
         match s {
             "light" => Self::Light,
@@ -76,6 +77,14 @@ impl ThemeMode {
             Self::HighContrastDark => "⬛",
             Self::HighContrastLight => "⬜",
         }
+    }
+}
+
+impl std::str::FromStr for ThemeMode {
+    type Err = std::convert::Infallible;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Ok(Self::from_str(s))
     }
 }
 
