@@ -5,7 +5,9 @@
 pub mod components;
 pub mod storage;
 
-use crate::components::theme::{apply_document_theme, get_initial_theme};
+use crate::components::theme::{
+    apply_document_dyslexia, apply_document_theme, get_initial_dyslexia, get_initial_theme,
+};
 use crate::components::{
     ExportModal, HelpModal, ImportModal, ItemList, Navbar, ResetModal, StorageModal,
 };
@@ -19,9 +21,12 @@ use tracing::info;
 
 #[component]
 pub fn App() -> impl IntoView {
-    // Initialize Theme
+    // Initialize Theme & Typography
     let theme = RwSignal::new(get_initial_theme());
     apply_document_theme(theme.get());
+
+    let dyslexia = RwSignal::new(get_initial_dyslexia());
+    apply_document_dyslexia(dyslexia.get());
 
     // Initialize State from local storage or sample data
     let initial_state = load_state_from_storage().unwrap_or_else(|| {
@@ -81,6 +86,7 @@ pub fn App() -> impl IntoView {
 
             <Navbar
                 theme=theme
+                dyslexia=dyslexia
                 show_reset_modal=show_reset_modal
                 show_help_modal=show_help_modal
                 show_import_modal=show_import_modal

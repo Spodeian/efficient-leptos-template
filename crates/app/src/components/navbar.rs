@@ -1,6 +1,6 @@
 //! Responsive top navigation bar with quick action buttons and mobile drawer.
 
-use crate::components::theme::ThemeToggle;
+use crate::components::theme::{DyslexiaToggle, ThemeToggle};
 use crate::storage::{query_storage_diagnostics, trigger_pwa_install};
 use leptos::prelude::*;
 use shared::ThemeMode;
@@ -8,6 +8,7 @@ use shared::ThemeMode;
 #[component]
 pub fn Navbar(
     theme: RwSignal<ThemeMode>,
+    dyslexia: RwSignal<bool>,
     show_reset_modal: RwSignal<bool>,
     show_help_modal: RwSignal<bool>,
     show_import_modal: RwSignal<bool>,
@@ -76,9 +77,15 @@ pub fn Navbar(
                         "Reset"
                     </button>
                     {if let Some(ann) = announcement {
-                        view! { <ThemeToggle theme=theme announcement=ann /> }.into_any()
+                        view! {
+                            <ThemeToggle theme=theme announcement=ann />
+                            <DyslexiaToggle dyslexia=dyslexia announcement=ann />
+                        }.into_any()
                     } else {
-                        view! { <ThemeToggle theme=theme /> }.into_any()
+                        view! {
+                            <ThemeToggle theme=theme />
+                            <DyslexiaToggle dyslexia=dyslexia />
+                        }.into_any()
                     }}
                 </nav>
 
@@ -140,11 +147,17 @@ pub fn Navbar(
                         }>
                             "Reset State"
                         </button>
-                        <div class="drawer-theme">
+                        <div class="drawer-theme" style="display: flex; gap: 0.5rem; justify-content: center; flex-wrap: wrap;">
                             {if let Some(ann) = announcement {
-                                view! { <ThemeToggle theme=theme announcement=ann /> }.into_any()
+                                view! {
+                                    <ThemeToggle theme=theme announcement=ann />
+                                    <DyslexiaToggle dyslexia=dyslexia announcement=ann />
+                                }.into_any()
                             } else {
-                                view! { <ThemeToggle theme=theme /> }.into_any()
+                                view! {
+                                    <ThemeToggle theme=theme />
+                                    <DyslexiaToggle dyslexia=dyslexia />
+                                }.into_any()
                             }}
                         </div>
                     </div>
