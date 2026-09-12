@@ -131,7 +131,9 @@ jobs:
       - name: Check Formatting (Rustfmt)
         run: cargo fmt --all -- --check
       - name: Install Leptosfmt
-        uses: taiki-e/install-action@leptosfmt
+        uses: taiki-e/install-action@v2
+        with:
+          tool: leptosfmt
       - name: Check Leptos Formatting (Leptosfmt)
         run: leptosfmt --check crates
       - name: Clippy Linter
