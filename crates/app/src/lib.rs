@@ -102,50 +102,74 @@ pub fn App() -> impl IntoView {
                     let d = diag.get();
                     let is_ephemeral = d.is_persisted == Some(false);
                     let is_quota = d.quota_exceeded;
-                    if is_ephemeral && is_quota && !dismissed_combined.get() {
+                    let show_combined = is_ephemeral && is_quota && !dismissed_combined.get();
+                    let show_ephemeral = is_ephemeral && !dismissed_ephemeral.get();
+                    let show_quota = is_quota && !dismissed_quota.get();
+                    if show_combined || show_ephemeral || show_quota {
+                        let (alert_class, bg_style, border_style, text_msg) = if show_combined {
+                            (
+                                "banner-alert banner-danger",
+                                "background: rgba(35, 20, 20, 0.95);",
+                                "border: 1px solid var(--danger);",
+
+                                view! {
+                                    <span style="color: rgb(255, 120, 120);">
+                                        <strong>"Storage Warning: "</strong>
+                                        "Running in ephemeral storage and quota is full."
+                                    </span>
+                                }
+                                    .into_any(),
+                            )
+                        } else if show_ephemeral {
+                            (
+                                "banner-alert banner-warning",
+                                "background: rgba(35, 28, 15, 0.95);",
+                                "border: 1px solid var(--warning);",
+                                view! {
+                                    <span style="color: rgb(255, 200, 80);">
+                                        <strong>"Ephemeral Storage: "</strong>
+                                        "Browser may clear local data under storage pressure."
+                                    </span>
+                                }
+                                    .into_any(),
+                            )
+                        } else {
+                            (
+                                "banner-alert banner-warning",
+                                "background: rgba(35, 28, 15, 0.95);",
+                                "border: 1px solid var(--warning);",
+                                view! {
+                                    <span style="color: rgb(255, 200, 80);">
+                                        <strong>"Quota Exceeded: "</strong>
+                                        "Data migrated to IndexedDB fallback tier."
+                                    </span>
+                                }
+                                    .into_any(),
+                            )
+                        };
+                        let on_dismiss = move |_| {
+                            if show_combined {
+                                dismissed_combined.set(true);
+                            } else if show_ephemeral {
+                                dismissed_ephemeral.set(true);
+                            } else {
+                                dismissed_quota.set(true);
+                            }
+                        };
 
                         view! {
                             <div
-                                class="banner-alert banner-danger"
-                                style="margin-bottom: 12px; padding: 10px 14px; background: rgba(218, 54, 51, 0.2); border: 1px solid var(--danger); border-radius: 8px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;"
+                                class=alert_class
+                                style=format!(
+                                    "position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 1000; padding: 12px 18px; {} {} border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); display: flex; flex-direction: column; align-items: center; gap: 8px; max-width: 90vw; width: max-content;",
+                                    bg_style,
+                                    border_style,
+                                )
                             >
-                                <span>
-                                    <strong>"Storage Alert:"</strong>
-                                    " Storage is Ephemeral AND Quota Limit Exceeded!"
-                                </span>
-                                <div style="display: flex; gap: 6px;">
+                                <div>{text_msg}</div>
+                                <div style="display: flex; justify-content: center; align-items: center; gap: 8px; flex-wrap: wrap;">
                                     <button class="btn btn-sm btn-primary" on:click=on_backup_bson>
                                         "Save .bson Backup"
-                                    </button>
-                                    <button
-                                        class="btn btn-sm btn-outline"
-                                        on:click=move |_| request_persistent_storage()
-                                    >
-                                        "Request Permission"
-                                    </button>
-                                    <button
-                                        class="btn btn-sm btn-secondary"
-                                        on:click=move |_| dismissed_combined.set(true)
-                                    >
-                                        "Dismiss"
-                                    </button>
-                                </div>
-                            </div>
-                        }
-                            .into_any()
-                    } else if is_ephemeral && !dismissed_ephemeral.get() {
-                        view! {
-                            <div
-                                class="banner-alert banner-warning"
-                                style="margin-bottom: 12px; padding: 10px 14px; background: rgba(210, 153, 34, 0.2); border: 1px solid var(--warning); border-radius: 8px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;"
-                            >
-                                <span>
-                                    <strong>"Ephemeral Storage:"</strong>
-                                    " Browser may clear local data under storage pressure."
-                                </span>
-                                <div style="display: flex; gap: 6px;">
-                                    <button class="btn btn-sm btn-primary" on:click=on_backup_bson>
-                                        "Backup .bson"
                                     </button>
                                     <button
                                         class="btn btn-sm btn-outline"
@@ -153,34 +177,7 @@ pub fn App() -> impl IntoView {
                                     >
                                         "Request Persistence"
                                     </button>
-                                    <button
-                                        class="btn btn-sm btn-secondary"
-                                        on:click=move |_| dismissed_ephemeral.set(true)
-                                    >
-                                        "Dismiss"
-                                    </button>
-                                </div>
-                            </div>
-                        }
-                            .into_any()
-                    } else if is_quota && !dismissed_quota.get() {
-                        view! {
-                            <div
-                                class="banner-alert banner-warning"
-                                style="margin-bottom: 12px; padding: 10px 14px; background: rgba(210, 153, 34, 0.2); border: 1px solid var(--warning); border-radius: 8px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;"
-                            >
-                                <span>
-                                    <strong>"Quota Exceeded:"</strong>
-                                    " Data migrated to IndexedDB fallback tier."
-                                </span>
-                                <div style="display: flex; gap: 6px;">
-                                    <button class="btn btn-sm btn-primary" on:click=on_backup_bson>
-                                        "Save .bson Backup"
-                                    </button>
-                                    <button
-                                        class="btn btn-sm btn-secondary"
-                                        on:click=move |_| dismissed_quota.set(true)
-                                    >
+                                    <button class="btn btn-sm btn-secondary" on:click=on_dismiss>
                                         "Dismiss"
                                     </button>
                                 </div>
