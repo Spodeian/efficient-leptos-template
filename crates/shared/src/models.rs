@@ -8,18 +8,83 @@ pub enum ThemeMode {
     #[default]
     Dark,
     Light,
+    HighContrastDark,
+    HighContrastLight,
 }
 
 impl ThemeMode {
+    #[must_use]
     pub fn is_dark(self) -> bool {
-        matches!(self, Self::Dark)
+        matches!(self, Self::Dark | Self::HighContrastDark)
     }
 
-    pub fn toggle(self) -> Self {
+    #[must_use]
+    pub fn is_high_contrast(self) -> bool {
+        matches!(self, Self::HighContrastDark | Self::HighContrastLight)
+    }
+
+    #[must_use]
+    pub fn next(self) -> Self {
         match self {
             Self::Dark => Self::Light,
-            Self::Light => Self::Dark,
+            Self::Light => Self::HighContrastDark,
+            Self::HighContrastDark => Self::HighContrastLight,
+            Self::HighContrastLight => Self::Dark,
         }
+    }
+
+    #[must_use]
+    pub fn toggle(self) -> Self {
+        self.next()
+    }
+
+    #[must_use]
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::Dark => "dark",
+            Self::Light => "light",
+            Self::HighContrastDark => "high-contrast-dark",
+            Self::HighContrastLight => "high-contrast-light",
+        }
+    }
+
+    #[must_use]
+    #[allow(clippy::should_implement_trait)]
+    pub fn from_str(s: &str) -> Self {
+        match s {
+            "light" => Self::Light,
+            "high-contrast-dark" => Self::HighContrastDark,
+            "high-contrast-light" => Self::HighContrastLight,
+            _ => Self::Dark,
+        }
+    }
+
+    #[must_use]
+    pub fn display_label(self) -> &'static str {
+        match self {
+            Self::Dark => "Dark",
+            Self::Light => "Warm Light",
+            Self::HighContrastDark => "HC Dark",
+            Self::HighContrastLight => "HC Light",
+        }
+    }
+
+    #[must_use]
+    pub fn icon(self) -> &'static str {
+        match self {
+            Self::Dark => "🌙",
+            Self::Light => "☀️",
+            Self::HighContrastDark => "⬛",
+            Self::HighContrastLight => "⬜",
+        }
+    }
+}
+
+impl std::str::FromStr for ThemeMode {
+    type Err = std::convert::Infallible;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Ok(Self::from_str(s))
     }
 }
 

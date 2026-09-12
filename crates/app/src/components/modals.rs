@@ -11,6 +11,42 @@ use shared::{
 };
 use tracing::info;
 
+/// Helper to trap Tab navigation inside modal dialogs (WCAG 2.4.3).
+#[allow(unused_variables)]
+pub fn handle_modal_tab_trap(
+    ev: &web_sys::KeyboardEvent,
+    first_el: Option<&web_sys::HtmlElement>,
+    last_el: Option<&web_sys::HtmlElement>,
+) {
+    if ev.key() == "Tab" {
+        #[cfg(target_arch = "wasm32")]
+        {
+            if let Some(doc) = web_sys::window().and_then(|w| w.document()) {
+                let active = doc.active_element();
+                if ev.shift_key() {
+                    if let (Some(active), Some(first)) = (active.as_ref(), first_el) {
+                        if first.is_same_node(Some(active.as_ref())) {
+                            ev.prevent_default();
+                            if let Some(last) = last_el {
+                                let _ = last.focus();
+                            }
+                        }
+                    }
+                } else {
+                    if let (Some(active), Some(last)) = (active.as_ref(), last_el) {
+                        if last.is_same_node(Some(active.as_ref())) {
+                            ev.prevent_default();
+                            if let Some(first) = first_el {
+                                let _ = first.focus();
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
 #[component]
 pub fn ResetModal(is_open: RwSignal<bool>, state: RwSignal<AppState>) -> impl IntoView {
     let confirm_reset = move |_| {
@@ -25,32 +61,84 @@ pub fn ResetModal(is_open: RwSignal<bool>, state: RwSignal<AppState>) -> impl In
         is_open.set(false);
     };
 
+    let cancel_btn_ref = NodeRef::<leptos::html::Button>::new();
+    let reset_btn_ref = NodeRef::<leptos::html::Button>::new();
+
+    // Auto-focus Cancel button on open for safe default
+    Effect::new(move |_| {
+        if let (true, Some(btn)) = (is_open.get(), cancel_btn_ref.get()) {
+            let _ = btn.focus();
+        }
+    });
+
+    let on_dialog_keydown = move |ev: web_sys::KeyboardEvent| {
+        if ev.key() == "Escape" {
+            ev.stop_propagation();
+            is_open.set(false);
+        } else {
+            let first = cancel_btn_ref.get();
+            let last = reset_btn_ref.get();
+            handle_modal_tab_trap(&ev, first.as_deref(), last.as_deref());
+        }
+    };
+
     view! {
-        {move || if is_open.get() {
-            view! {
-                <div class="modal-backdrop" on:click=close_modal>
-                    <div class="modal-card" on:click=move |ev| ev.stop_propagation()>
-                        <div class="modal-header">
-                            <h3 class="modal-title">"Reset Application State"</h3>
-                            <button class="modal-close-btn" on:click=close_modal>"✕"</button>
-                        </div>
-                        <div class="modal-body">
-                            <p>"Are you sure you want to reset all tasks and configuration to the default sample dataset?"</p>
-                            <p class="text-warning">"Any custom items and changes will be replaced in local browser storage."</p>
-                        </div>
-                        <div class="modal-footer">
-                            <button class="btn btn-secondary" on:click=close_modal>
-                                "Cancel"
-                            </button>
-                            <button class="btn btn-danger" on:click=confirm_reset>
-                                "Yes, Reset Everything"
-                            </button>
+        {move || {
+            if is_open.get() {
+                view! {
+                    <div class="modal-backdrop" on:click=close_modal>
+                        <div
+                            class="modal-card"
+                            role="dialog"
+                            aria-modal="true"
+                            aria-labelledby="reset-modal-title"
+                            tabindex="-1"
+                            on:click=move |ev| ev.stop_propagation()
+                            on:keydown=on_dialog_keydown
+                        >
+                            <div class="modal-header">
+                                <h3 id="reset-modal-title" class="modal-title">
+                                    "Reset Application State"
+                                </h3>
+                                <button
+                                    class="modal-close-btn"
+                                    on:click=close_modal
+                                    aria-label="Close dialog"
+                                >
+                                    "✕"
+                                </button>
+                            </div>
+                            <div class="modal-body">
+                                <p>
+                                    "Are you sure you want to reset all tasks and configuration to the default sample dataset?"
+                                </p>
+                                <p class="text-warning">
+                                    "Any custom items and changes will be replaced in local browser storage."
+                                </p>
+                            </div>
+                            <div class="modal-footer">
+                                <button
+                                    node_ref=cancel_btn_ref
+                                    class="btn btn-secondary"
+                                    on:click=close_modal
+                                >
+                                    "Cancel"
+                                </button>
+                                <button
+                                    node_ref=reset_btn_ref
+                                    class="btn btn-danger"
+                                    on:click=confirm_reset
+                                >
+                                    "Yes, Reset Everything"
+                                </button>
+                            </div>
                         </div>
                     </div>
-                </div>
-            }.into_any()
-        } else {
-            view! {}.into_any()
+                }
+                    .into_any()
+            } else {
+                view! {}.into_any()
+            }
         }}
     }
 }
@@ -61,62 +149,131 @@ pub fn HelpModal(is_open: RwSignal<bool>) -> impl IntoView {
         is_open.set(false);
     };
 
+    let close_btn_ref = NodeRef::<leptos::html::Button>::new();
+    let got_it_btn_ref = NodeRef::<leptos::html::Button>::new();
+
+    Effect::new(move |_| {
+        if let (true, Some(btn)) = (is_open.get(), close_btn_ref.get()) {
+            let _ = btn.focus();
+        }
+    });
+
+    let on_dialog_keydown = move |ev: web_sys::KeyboardEvent| {
+        if ev.key() == "Escape" {
+            ev.stop_propagation();
+            is_open.set(false);
+        } else {
+            let first = close_btn_ref.get();
+            let last = got_it_btn_ref.get();
+            handle_modal_tab_trap(&ev, first.as_deref(), last.as_deref());
+        }
+    };
+
     view! {
-        {move || if is_open.get() {
-            view! {
-                <div class="modal-backdrop" on:click=close_modal>
-                    <div class="modal-card modal-large" on:click=move |ev| ev.stop_propagation()>
-                        <div class="modal-header">
-                            <h3 class="modal-title">"Architecture & Help Guide • " {concat!("v", env!("CARGO_PKG_VERSION"))}</h3>
-                            <button class="modal-close-btn" on:click=close_modal>"✕"</button>
-                        </div>
-                        <div class="modal-body help-content">
-                            <section class="help-section">
-                                <h4>"Leptos Serverless & Desktop Architecture"</h4>
-                                <p>
-                                    "This template provides a modular Rust architecture using "
-                                    <strong>"Leptos 0.8"</strong>
-                                    " compiled to Client-Side WebAssembly (WASM) for Serverless Static hosting (Cloudflare Pages / GitHub Pages) and Native Desktop (Tauri v2)."
-                                </p>
-                            </section>
+        {move || {
+            if is_open.get() {
+                view! {
+                    <div class="modal-backdrop" on:click=close_modal>
+                        <div
+                            class="modal-card modal-large"
+                            role="dialog"
+                            aria-modal="true"
+                            aria-labelledby="help-modal-title"
+                            tabindex="-1"
+                            on:click=move |ev| ev.stop_propagation()
+                            on:keydown=on_dialog_keydown
+                        >
+                            <div class="modal-header">
+                                <h3 id="help-modal-title" class="modal-title">
+                                    "Architecture & Help Guide • "
+                                    {concat!("v", env!("CARGO_PKG_VERSION"))}
+                                </h3>
+                                <button
+                                    node_ref=close_btn_ref
+                                    class="modal-close-btn"
+                                    on:click=close_modal
+                                    aria-label="Close dialog"
+                                >
+                                    "✕"
+                                </button>
+                            </div>
+                            <div class="modal-body help-content">
+                                <section class="help-section">
+                                    <h4>"Leptos Serverless & Desktop Architecture"</h4>
+                                    <p>
+                                        "This template provides a modular Rust architecture using "
+                                        <strong>"Leptos 0.8"</strong>
+                                        " compiled to Client-Side WebAssembly (WASM) for Serverless Static hosting (Cloudflare Pages / GitHub Pages) and Native Desktop (Tauri v2)."
+                                    </p>
+                                </section>
 
-                            <section class="help-section">
-                                <h4>"Crate Decomposition"</h4>
-                                <ul>
-                                    <li><strong>"crates/shared:"</strong> " Domain models ("<code>"Item"</code>", "<code>"AppState"</code>") and robust JSON / CSV / BSON export/import engines."</li>
-                                    <li><strong>"crates/app:"</strong> " Universal Leptos UI components, reactive signals, responsive layout, theme engine, and dialogs."</li>
-                                    <li><strong>"crates/web:"</strong> " Web client entrypoint with wasm-bindgen, Trunk configuration, and PWA assets."</li>
-                                    <li><strong>"crates/desktop:"</strong> " Tauri v2 native desktop runner with cross-platform window management."</li>
-                                </ul>
-                            </section>
+                                <section class="help-section">
+                                    <h4>"Crate Decomposition"</h4>
+                                    <ul>
+                                        <li>
+                                            <strong>"crates/shared:"</strong>
+                                            " Domain models ("
+                                            <code>"Item"</code>
+                                            ", "
+                                            <code>"AppState"</code>
+                                            ") and robust JSON / CSV / BSON export/import engines."
+                                        </li>
+                                        <li>
+                                            <strong>"crates/app:"</strong>
+                                            " Universal Leptos UI components, reactive signals, responsive layout, theme engine, and dialogs."
+                                        </li>
+                                        <li>
+                                            <strong>"crates/web:"</strong>
+                                            " Web client entrypoint with wasm-bindgen, Trunk configuration, and PWA assets."
+                                        </li>
+                                        <li>
+                                            <strong>"crates/desktop:"</strong>
+                                            " Tauri v2 native desktop runner with cross-platform window management."
+                                        </li>
+                                    </ul>
+                                </section>
 
-                            <section class="help-section">
-                                <h4>"PWA & Caching Strategy"</h4>
-                                <p>
-                                    "Features a hybrid service worker caching strategy: "
-                                    <strong>"Network-First"</strong> " for HTML entrypoint to guarantee instant zero-downtime updates, and "
-                                    <strong>"Cache-First"</strong> " for content-hashed WASM, JS, and CSS bundles."
-                                </p>
-                            </section>
+                                <section class="help-section">
+                                    <h4>"PWA & Caching Strategy"</h4>
+                                    <p>
+                                        "Features a hybrid service worker caching strategy: "
+                                        <strong>"Network-First"</strong>
+                                        " for HTML entrypoint to guarantee instant zero-downtime updates, and "
+                                        <strong>"Cache-First"</strong>
+                                        " for content-hashed WASM, JS, and CSS bundles."
+                                    </p>
+                                </section>
 
-                            <section class="help-section">
-                                <h4>"Keyboard Shortcuts"</h4>
-                                <ul>
-                                    <li><kbd>"Enter"</kbd> " — Quickly submit new item creation in form"</li>
-                                    <li><kbd>"Escape"</kbd> " — Dismiss any open modal dialog"</li>
-                                </ul>
-                            </section>
-                        </div>
-                        <div class="modal-footer">
-                            <button class="btn btn-primary" on:click=close_modal>
-                                "Got it"
-                            </button>
+                                <section class="help-section">
+                                    <h4>"Keyboard Shortcuts"</h4>
+                                    <ul>
+                                        <li>
+                                            <kbd>"Enter"</kbd>
+                                            " — Quickly submit new item creation in form"
+                                        </li>
+                                        <li>
+                                            <kbd>"Escape"</kbd>
+                                            " — Dismiss any open modal dialog"
+                                        </li>
+                                    </ul>
+                                </section>
+                            </div>
+                            <div class="modal-footer">
+                                <button
+                                    node_ref=got_it_btn_ref
+                                    class="btn btn-primary"
+                                    on:click=close_modal
+                                >
+                                    "Got it"
+                                </button>
+                            </div>
                         </div>
                     </div>
-                </div>
-            }.into_any()
-        } else {
-            view! {}.into_any()
+                }
+                    .into_any()
+            } else {
+                view! {}.into_any()
+            }
         }}
     }
 }
@@ -139,6 +296,26 @@ pub fn ImportModal(is_open: RwSignal<bool>, state: RwSignal<AppState>) -> impl I
         is_open.set(false);
         raw_text.set(String::new());
         status_message.set(None);
+    };
+
+    let close_btn_ref = NodeRef::<leptos::html::Button>::new();
+    let import_btn_ref = NodeRef::<leptos::html::Button>::new();
+
+    Effect::new(move |_| {
+        if let (true, Some(btn)) = (is_open.get(), close_btn_ref.get()) {
+            let _ = btn.focus();
+        }
+    });
+
+    let on_dialog_keydown = move |ev: web_sys::KeyboardEvent| {
+        if ev.key() == "Escape" {
+            ev.stop_propagation();
+            is_open.set(false);
+        } else {
+            let first = close_btn_ref.get();
+            let last = import_btn_ref.get();
+            handle_modal_tab_trap(&ev, first.as_deref(), last.as_deref());
+        }
     };
 
     let do_import = move |_| {
@@ -209,84 +386,149 @@ pub fn ImportModal(is_open: RwSignal<bool>, state: RwSignal<AppState>) -> impl I
     };
 
     view! {
-        {move || if is_open.get() {
-            view! {
-                <div class="modal-backdrop" on:click=close_modal>
-                    <div class="modal-card modal-large" on:click=move |ev| ev.stop_propagation()>
-                        <div class="modal-header">
-                            <h3 class="modal-title">"Import Data"</h3>
-                            <button class="modal-close-btn" on:click=close_modal>"✕"</button>
-                        </div>
-                        <div class="modal-body">
-                            <div class="format-toggle-bar">
+        {move || {
+            if is_open.get() {
+                view! {
+                    <div class="modal-backdrop" on:click=close_modal>
+                        <div
+                            class="modal-card modal-large"
+                            role="dialog"
+                            aria-modal="true"
+                            aria-labelledby="import-modal-title"
+                            tabindex="-1"
+                            on:click=move |ev| ev.stop_propagation()
+                            on:keydown=on_dialog_keydown
+                        >
+                            <div class="modal-header">
+                                <h3 id="import-modal-title" class="modal-title">
+                                    "Import Data"
+                                </h3>
                                 <button
-                                    class=move || format!("tab-btn {}", if import_format.get() == ImportFormat::Json { "active" } else { "" })
-                                    on:click=move |_| {
-                                        import_format.set(ImportFormat::Json);
-                                        status_message.set(None);
-                                    }
+                                    node_ref=close_btn_ref
+                                    class="modal-close-btn"
+                                    on:click=close_modal
+                                    aria-label="Close dialog"
                                 >
-                                    "JSON"
-                                </button>
-                                <button
-                                    class=move || format!("tab-btn {}", if import_format.get() == ImportFormat::Csv { "active" } else { "" })
-                                    on:click=move |_| {
-                                        import_format.set(ImportFormat::Csv);
-                                        status_message.set(None);
-                                    }
-                                >
-                                    "CSV"
-                                </button>
-                                <button
-                                    class=move || format!("tab-btn {}", if import_format.get() == ImportFormat::Bson { "active" } else { "" })
-                                    on:click=move |_| {
-                                        import_format.set(ImportFormat::Bson);
-                                        status_message.set(None);
-                                    }
-                                >
-                                    "Base64 BSON"
+                                    "✕"
                                 </button>
                             </div>
+                            <div class="modal-body">
+                                <div class="format-toggle-bar">
+                                    <button
+                                        class=move || {
+                                            format!(
+                                                "tab-btn {}",
+                                                if import_format.get() == ImportFormat::Json {
+                                                    "active"
+                                                } else {
+                                                    ""
+                                                },
+                                            )
+                                        }
+                                        on:click=move |_| {
+                                            import_format.set(ImportFormat::Json);
+                                            status_message.set(None);
+                                        }
+                                    >
+                                        "JSON"
+                                    </button>
+                                    <button
+                                        class=move || {
+                                            format!(
+                                                "tab-btn {}",
+                                                if import_format.get() == ImportFormat::Csv {
+                                                    "active"
+                                                } else {
+                                                    ""
+                                                },
+                                            )
+                                        }
+                                        on:click=move |_| {
+                                            import_format.set(ImportFormat::Csv);
+                                            status_message.set(None);
+                                        }
+                                    >
+                                        "CSV"
+                                    </button>
+                                    <button
+                                        class=move || {
+                                            format!(
+                                                "tab-btn {}",
+                                                if import_format.get() == ImportFormat::Bson {
+                                                    "active"
+                                                } else {
+                                                    ""
+                                                },
+                                            )
+                                        }
+                                        on:click=move |_| {
+                                            import_format.set(ImportFormat::Bson);
+                                            status_message.set(None);
+                                        }
+                                    >
+                                        "Base64 BSON"
+                                    </button>
+                                </div>
 
-                            <p class="modal-instruction">
-                                {move || match import_format.get() {
-                                    ImportFormat::Json => "Paste a valid JSON AppState string below:",
-                                    ImportFormat::Csv => "Paste valid CSV data below (Header: id,title,description,priority,completed,created_at):",
-                                    ImportFormat::Bson => "Paste Base64 encoded compressed BSON data below:",
+                                <p class="modal-instruction">
+                                    {move || match import_format.get() {
+                                        ImportFormat::Json => {
+                                            "Paste a valid JSON AppState string below:"
+                                        }
+                                        ImportFormat::Csv => {
+                                            "Paste valid CSV data below (Header: id,title,description,priority,completed,created_at):"
+                                        }
+                                        ImportFormat::Bson => {
+                                            "Paste Base64 encoded compressed BSON data below:"
+                                        }
+                                    }}
+                                </p>
+
+                                <textarea
+                                    class="modal-textarea"
+                                    rows="8"
+                                    placeholder=move || match import_format.get() {
+                                        ImportFormat::Json => "{\n  \"collection\": { ... }\n}",
+                                        ImportFormat::Csv => {
+                                            "id,title,description,priority,completed,created_at\n1,Sample Task,Task details,High,false,0"
+                                        }
+                                        ImportFormat::Bson => "Paste Base64 string here...",
+                                    }
+                                    prop:value=move || raw_text.get()
+                                    on:input=move |ev| raw_text.set(event_target_value(&ev))
+                                ></textarea>
+
+                                {move || match status_message.get() {
+                                    Some(Ok(msg)) => {
+                                        view! { <div class="alert alert-success">{msg}</div> }
+                                            .into_any()
+                                    }
+                                    Some(Err(err)) => {
+                                        view! { <div class="alert alert-error">{err}</div> }
+                                            .into_any()
+                                    }
+                                    None => view! {}.into_any(),
                                 }}
-                            </p>
-
-                            <textarea
-                                class="modal-textarea"
-                                rows="8"
-                                placeholder=move || match import_format.get() {
-                                    ImportFormat::Json => "{\n  \"collection\": { ... }\n}",
-                                    ImportFormat::Csv => "id,title,description,priority,completed,created_at\n1,Sample Task,Task details,High,false,0",
-                                    ImportFormat::Bson => "Paste Base64 string here...",
-                                }
-                                prop:value=move || raw_text.get()
-                                on:input=move |ev| raw_text.set(event_target_value(&ev))
-                            ></textarea>
-
-                            {move || match status_message.get() {
-                                Some(Ok(msg)) => view! { <div class="alert alert-success">{msg}</div> }.into_any(),
-                                Some(Err(err)) => view! { <div class="alert alert-error">{err}</div> }.into_any(),
-                                None => view! {}.into_any(),
-                            }}
-                        </div>
-                        <div class="modal-footer">
-                            <button class="btn btn-secondary" on:click=close_modal>
-                                "Close"
-                            </button>
-                            <button class="btn btn-primary" on:click=do_import>
-                                "Import & Apply"
-                            </button>
+                            </div>
+                            <div class="modal-footer">
+                                <button class="btn btn-secondary" on:click=close_modal>
+                                    "Close"
+                                </button>
+                                <button
+                                    node_ref=import_btn_ref
+                                    class="btn btn-primary"
+                                    on:click=do_import
+                                >
+                                    "Import & Apply"
+                                </button>
+                            </div>
                         </div>
                     </div>
-                </div>
-            }.into_any()
-        } else {
-            view! {}.into_any()
+                }
+                    .into_any()
+            } else {
+                view! {}.into_any()
+            }
         }}
     }
 }
@@ -307,6 +549,26 @@ pub fn ExportModal(is_open: RwSignal<bool>, state: RwSignal<AppState>) -> impl I
     let close_modal = move |_| {
         is_open.set(false);
         copy_feedback.set(false);
+    };
+
+    let close_btn_ref = NodeRef::<leptos::html::Button>::new();
+    let download_btn_ref = NodeRef::<leptos::html::Button>::new();
+
+    Effect::new(move |_| {
+        if let (true, Some(btn)) = (is_open.get(), close_btn_ref.get()) {
+            let _ = btn.focus();
+        }
+    });
+
+    let on_dialog_keydown = move |ev: web_sys::KeyboardEvent| {
+        if ev.key() == "Escape" {
+            ev.stop_propagation();
+            is_open.set(false);
+        } else {
+            let first = close_btn_ref.get();
+            let last = download_btn_ref.get();
+            handle_modal_tab_trap(&ev, first.as_deref(), last.as_deref());
+        }
     };
 
     let exported_content = Memo::new(move |_| {
@@ -359,65 +621,123 @@ pub fn ExportModal(is_open: RwSignal<bool>, state: RwSignal<AppState>) -> impl I
     };
 
     view! {
-        {move || if is_open.get() {
-            view! {
-                <div class="modal-backdrop" on:click=close_modal>
-                    <div class="modal-card modal-large" on:click=move |ev| ev.stop_propagation()>
-                        <div class="modal-header">
-                            <h3 class="modal-title">"Export Data"</h3>
-                            <button class="modal-close-btn" on:click=close_modal>"✕"</button>
-                        </div>
-                        <div class="modal-body">
-                            <div class="format-toggle-bar">
+        {move || {
+            if is_open.get() {
+                view! {
+                    <div class="modal-backdrop" on:click=close_modal>
+                        <div
+                            class="modal-card modal-large"
+                            role="dialog"
+                            aria-modal="true"
+                            aria-labelledby="export-modal-title"
+                            tabindex="-1"
+                            on:click=move |ev| ev.stop_propagation()
+                            on:keydown=on_dialog_keydown
+                        >
+                            <div class="modal-header">
+                                <h3 id="export-modal-title" class="modal-title">
+                                    "Export Data"
+                                </h3>
                                 <button
-                                    class=move || format!("tab-btn {}", if export_format.get() == ExportFormat::Json { "active" } else { "" })
-                                    on:click=move |_| export_format.set(ExportFormat::Json)
+                                    node_ref=close_btn_ref
+                                    class="modal-close-btn"
+                                    on:click=close_modal
+                                    aria-label="Close dialog"
                                 >
-                                    "JSON"
-                                </button>
-                                <button
-                                    class=move || format!("tab-btn {}", if export_format.get() == ExportFormat::Csv { "active" } else { "" })
-                                    on:click=move |_| export_format.set(ExportFormat::Csv)
-                                >
-                                    "CSV"
-                                </button>
-                                <button
-                                    class=move || format!("tab-btn {}", if export_format.get() == ExportFormat::Bson { "active" } else { "" })
-                                    on:click=move |_| export_format.set(ExportFormat::Bson)
-                                >
-                                    "Compressed BSON"
+                                    "✕"
                                 </button>
                             </div>
+                            <div class="modal-body">
+                                <div class="format-toggle-bar">
+                                    <button
+                                        class=move || {
+                                            format!(
+                                                "tab-btn {}",
+                                                if export_format.get() == ExportFormat::Json {
+                                                    "active"
+                                                } else {
+                                                    ""
+                                                },
+                                            )
+                                        }
+                                        on:click=move |_| export_format.set(ExportFormat::Json)
+                                    >
+                                        "JSON"
+                                    </button>
+                                    <button
+                                        class=move || {
+                                            format!(
+                                                "tab-btn {}",
+                                                if export_format.get() == ExportFormat::Csv {
+                                                    "active"
+                                                } else {
+                                                    ""
+                                                },
+                                            )
+                                        }
+                                        on:click=move |_| export_format.set(ExportFormat::Csv)
+                                    >
+                                        "CSV"
+                                    </button>
+                                    <button
+                                        class=move || {
+                                            format!(
+                                                "tab-btn {}",
+                                                if export_format.get() == ExportFormat::Bson {
+                                                    "active"
+                                                } else {
+                                                    ""
+                                                },
+                                            )
+                                        }
+                                        on:click=move |_| export_format.set(ExportFormat::Bson)
+                                    >
+                                        "Compressed BSON"
+                                    </button>
+                                </div>
 
-                            <textarea
-                                class="modal-textarea"
-                                rows="10"
-                                readonly=true
-                                prop:value=move || exported_content.get()
-                            ></textarea>
+                                <textarea
+                                    class="modal-textarea"
+                                    rows="10"
+                                    readonly=true
+                                    prop:value=move || exported_content.get()
+                                ></textarea>
 
-                            {move || if copy_feedback.get() {
-                                view! { <div class="alert alert-success">"Copied to clipboard!"</div> }.into_any()
-                            } else {
-                                view! {}.into_any()
-                            }}
-                        </div>
-                        <div class="modal-footer">
-                            <button class="btn btn-secondary" on:click=close_modal>
-                                "Close"
-                            </button>
-                            <button class="btn btn-outline" on:click=on_copy>
-                                "Copy to Clipboard"
-                            </button>
-                            <button class="btn btn-primary" on:click=on_download>
-                                "Download File"
-                            </button>
+                                {move || {
+                                    if copy_feedback.get() {
+                                        view! {
+                                            <div class="alert alert-success">
+                                                "Copied to clipboard!"
+                                            </div>
+                                        }
+                                            .into_any()
+                                    } else {
+                                        view! {}.into_any()
+                                    }
+                                }}
+                            </div>
+                            <div class="modal-footer">
+                                <button class="btn btn-secondary" on:click=close_modal>
+                                    "Close"
+                                </button>
+                                <button class="btn btn-outline" on:click=on_copy>
+                                    "Copy to Clipboard"
+                                </button>
+                                <button
+                                    node_ref=download_btn_ref
+                                    class="btn btn-primary"
+                                    on:click=on_download
+                                >
+                                    "Download File"
+                                </button>
+                            </div>
                         </div>
                     </div>
-                </div>
-            }.into_any()
-        } else {
-            view! {}.into_any()
+                }
+                    .into_any()
+            } else {
+                view! {}.into_any()
+            }
         }}
     }
 }
@@ -432,6 +752,26 @@ pub fn StorageModal(
 
     let close_modal = move |_| {
         is_open.set(false);
+    };
+
+    let close_btn_ref = NodeRef::<leptos::html::Button>::new();
+    let footer_close_btn_ref = NodeRef::<leptos::html::Button>::new();
+
+    Effect::new(move |_| {
+        if let (true, Some(btn)) = (is_open.get(), close_btn_ref.get()) {
+            let _ = btn.focus();
+        }
+    });
+
+    let on_dialog_keydown = move |ev: web_sys::KeyboardEvent| {
+        if ev.key() == "Escape" {
+            ev.stop_propagation();
+            is_open.set(false);
+        } else {
+            let first = close_btn_ref.get();
+            let last = footer_close_btn_ref.get();
+            handle_modal_tab_trap(&ev, first.as_deref(), last.as_deref());
+        }
     };
 
     let on_request_persistence = move |_| {
@@ -450,83 +790,121 @@ pub fn StorageModal(
     };
 
     view! {
-        {move || if is_open.get() {
-            let d = diag.get();
-            let status_text = match d.is_persisted {
-                Some(true) => "Persistent (Immune to browser eviction)",
-                Some(false) => "Ephemeral (May be cleared under storage pressure)",
-                None => "Unknown / Querying...",
-            };
-            let pwa_text = if d.is_pwa_installed {
-                "Installed (Permanent App)"
-            } else if d.pwa_install_available {
-                "Available to Install"
-            } else {
-                "Not Available in Tab"
-            };
+        {move || {
+            if is_open.get() {
+                let d = diag.get();
+                let status_text = match d.is_persisted {
+                    Some(true) => "Persistent (Immune to browser eviction)",
+                    Some(false) => "Ephemeral (May be cleared under storage pressure)",
+                    None => "Unknown / Querying...",
+                };
+                let pwa_text = if d.is_pwa_installed {
+                    "Installed (Permanent App)"
+                } else if d.pwa_install_available {
+                    "Available to Install"
+                } else {
+                    "Not Available in Tab"
+                };
 
-            view! {
-                <div class="modal-backdrop" on:click=close_modal>
-                    <div class="modal-card modal-large" on:click=move |ev| ev.stop_propagation()>
-                        <div class="modal-header">
-                            <h3 class="modal-title">"Storage & Data Management"</h3>
-                            <button class="modal-close-btn" on:click=close_modal>"✕"</button>
-                        </div>
-                        <div class="modal-body">
-                            <div class="storage-diag-section">
-                                <h4>"Storage Status"</h4>
-                                <ul class="diag-list">
-                                    <li><strong>"Durability: "</strong> <span>{status_text}</span></li>
-                                    <li><strong>"Active Storage Tier: "</strong> <span>{d.backend.label()}</span></li>
-                                    <li><strong>"PWA Installation: "</strong> <span>{pwa_text}</span></li>
-                                </ul>
+                view! {
+                    <div class="modal-backdrop" on:click=close_modal>
+                        <div
+                            class="modal-card modal-large"
+                            role="dialog"
+                            aria-modal="true"
+                            aria-labelledby="storage-modal-title"
+                            tabindex="-1"
+                            on:click=move |ev| ev.stop_propagation()
+                            on:keydown=on_dialog_keydown
+                        >
+                            <div class="modal-header">
+                                <h3 id="storage-modal-title" class="modal-title">
+                                    "Storage & Data Management"
+                                </h3>
+                                <button
+                                    node_ref=close_btn_ref
+                                    class="modal-close-btn"
+                                    on:click=close_modal
+                                    aria-label="Close dialog"
+                                >
+                                    "✕"
+                                </button>
                             </div>
+                            <div class="modal-body">
+                                <div class="storage-diag-section">
+                                    <h4>"Storage Status"</h4>
+                                    <ul class="diag-list">
+                                        <li>
+                                            <strong>"Durability: "</strong>
+                                            <span>{status_text}</span>
+                                        </li>
+                                        <li>
+                                            <strong>"Active Storage Tier: "</strong>
+                                            <span>{d.backend.label()}</span>
+                                        </li>
+                                        <li>
+                                            <strong>"PWA Installation: "</strong>
+                                            <span>{pwa_text}</span>
+                                        </li>
+                                    </ul>
+                                </div>
 
-                            <div class="storage-actions-section" style="margin-top: 16px;">
-                                <h4>"Storage Actions"</h4>
-                                <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px;">
-                                    {if d.is_persisted != Some(true) {
-                                        view! {
-                                            <button class="btn btn-outline" on:click=on_request_persistence>
-                                                "Request Persistent Storage"
-                                            </button>
-                                        }.into_any()
-                                    } else {
-                                        view! {}.into_any()
-                                    }}
-
-                                    {if d.pwa_install_available && !d.is_pwa_installed {
-                                        view! {
-                                            <button class="btn btn-outline" on:click=on_trigger_pwa>
-                                                "Install Web App"
-                                            </button>
-                                        }.into_any()
-                                    } else {
-                                        view! {}.into_any()
-                                    }}
-
-                                    <button class="btn btn-primary" on:click=on_export_bson>
-                                        "Export Compressed .bson Backup"
-                                    </button>
-                                    <button class="btn btn-secondary" on:click=move |_| {
-                                        is_open.set(false);
-                                        show_import_modal.set(true);
-                                    }>
-                                        "Import Backup"
-                                    </button>
+                                <div class="storage-actions-section" style="margin-top: 16px;">
+                                    <h4>"Storage Actions"</h4>
+                                    <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px;">
+                                        {if d.is_persisted != Some(true) {
+                                            view! {
+                                                <button
+                                                    class="btn btn-outline"
+                                                    on:click=on_request_persistence
+                                                >
+                                                    "Request Persistent Storage"
+                                                </button>
+                                            }
+                                                .into_any()
+                                        } else {
+                                            view! {}.into_any()
+                                        }}
+                                        {if d.pwa_install_available && !d.is_pwa_installed {
+                                            view! {
+                                                <button class="btn btn-outline" on:click=on_trigger_pwa>
+                                                    "Install Web App"
+                                                </button>
+                                            }
+                                                .into_any()
+                                        } else {
+                                            view! {}.into_any()
+                                        }} <button class="btn btn-primary" on:click=on_export_bson>
+                                            "Export Compressed .bson Backup"
+                                        </button>
+                                        <button
+                                            class="btn btn-secondary"
+                                            on:click=move |_| {
+                                                is_open.set(false);
+                                                show_import_modal.set(true);
+                                            }
+                                        >
+                                            "Import Backup"
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                        <div class="modal-footer">
-                            <button class="btn btn-secondary" on:click=close_modal>
-                                "Close"
-                            </button>
+                            <div class="modal-footer">
+                                <button
+                                    node_ref=footer_close_btn_ref
+                                    class="btn btn-secondary"
+                                    on:click=close_modal
+                                >
+                                    "Close"
+                                </button>
+                            </div>
                         </div>
                     </div>
-                </div>
-            }.into_any()
-        } else {
-            view! {}.into_any()
+                }
+                    .into_any()
+            } else {
+                view! {}.into_any()
+            }
         }}
     }
 }

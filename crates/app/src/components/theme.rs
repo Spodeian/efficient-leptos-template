@@ -12,13 +12,11 @@ pub fn apply_document_theme(_theme: ThemeMode) {
         if let Some(window) = web_sys::window() {
             if let Some(doc) = window.document() {
                 if let Some(html) = doc.document_element() {
-                    let theme_str = if theme.is_dark() { "dark" } else { "light" };
-                    let _ = html.set_attribute("data-theme", theme_str);
+                    let _ = html.set_attribute("data-theme", theme.as_str());
                 }
             }
             if let Ok(Some(storage)) = window.local_storage() {
-                let theme_str = if theme.is_dark() { "dark" } else { "light" };
-                let _ = storage.set_item(crate::storage::STORAGE_KEY_THEME, theme_str);
+                let _ = storage.set_item(crate::storage::STORAGE_KEY_THEME, theme.as_str());
             }
         }
     }
@@ -31,9 +29,7 @@ pub fn get_initial_theme() -> ThemeMode {
         if let Some(window) = web_sys::window() {
             if let Ok(Some(storage)) = window.local_storage() {
                 if let Ok(Some(val)) = storage.get_item(crate::storage::STORAGE_KEY_THEME) {
-                    if val == "light" {
-                        return ThemeMode::Light;
-                    }
+                    return ThemeMode::from_str(&val);
                 }
             }
         }
@@ -42,11 +38,17 @@ pub fn get_initial_theme() -> ThemeMode {
 }
 
 #[component]
-pub fn ThemeToggle(theme: RwSignal<ThemeMode>) -> impl IntoView {
+pub fn ThemeToggle(
+    theme: RwSignal<ThemeMode>,
+    #[prop(optional)] announcement: Option<RwSignal<String>>,
+) -> impl IntoView {
     let on_toggle = move |_| {
-        let new_theme = theme.get().toggle();
+        let new_theme = theme.get().next();
         theme.set(new_theme);
         apply_document_theme(new_theme);
+        if let Some(announcer) = announcement {
+            announcer.set(format!("Theme changed to {}", new_theme.display_label()));
+        }
         info!("Theme switched to: {:?}", new_theme);
     };
 
@@ -54,14 +56,102 @@ pub fn ThemeToggle(theme: RwSignal<ThemeMode>) -> impl IntoView {
         <button
             class="btn-theme-toggle"
             on:click=on_toggle
-            title=move || if theme.get().is_dark() { "Switch to Warm Light Mode" } else { "Switch to Dark Mode" }
-            aria-label="Toggle Theme"
+            title=move || format!("Theme: {}. Click to switch theme.", theme.get().display_label())
+            aria-label=move || {
+                format!("Theme selector. Currently set to {}.", theme.get().display_label())
+            }
         >
-            {move || if theme.get().is_dark() {
-                "Light Mode"
+            <span class="theme-icon">{move || theme.get().icon()}</span>
+            <span class="theme-label">{move || theme.get().display_label()}</span>
+        </button>
+    }
+}
+
+/// Applies the dyslexia typography attribute to the HTML document element and saves it to localStorage.
+pub fn apply_document_dyslexia(_enabled: bool) {
+    #[cfg(target_arch = "wasm32")]
+    {
+        if let Some(window) = web_sys::window() {
+            if let Some(doc) = window.document() {
+                if let Some(html) = doc.document_element() {
+                    if _enabled {
+                        let _ = html.set_attribute("data-dyslexia", "true");
+                    } else {
+                        let _ = html.remove_attribute("data-dyslexia");
+                    }
+                }
+            }
+            if let Ok(Some(storage)) = window.local_storage() {
+                let _ = storage.set_item(
+                    crate::storage::STORAGE_KEY_DYSLEXIA,
+                    if _enabled { "true" } else { "false" },
+                );
+            }
+        }
+    }
+}
+
+/// Reads the stored dyslexia typography setting from localStorage or defaults to false.
+#[must_use]
+pub fn get_initial_dyslexia() -> bool {
+    #[cfg(target_arch = "wasm32")]
+    {
+        if let Some(window) = web_sys::window() {
+            if let Ok(Some(storage)) = window.local_storage() {
+                if let Ok(Some(val)) = storage.get_item(crate::storage::STORAGE_KEY_DYSLEXIA) {
+                    return val == "true";
+                }
+            }
+        }
+    }
+    false
+}
+
+/// Accessible toggle button for dyslexia-friendly typography (Atkinson Hyperlegible & OpenDyslexic with WCAG 1.4.12 spacing).
+#[component]
+pub fn DyslexiaToggle(
+    dyslexia: RwSignal<bool>,
+    #[prop(optional)] announcement: Option<RwSignal<String>>,
+) -> impl IntoView {
+    let on_toggle = move |_| {
+        let new_val = !dyslexia.get();
+        dyslexia.set(new_val);
+        apply_document_dyslexia(new_val);
+        if let Some(announcer) = announcement {
+            announcer.set(if new_val {
+                "Dyslexia-friendly typography enabled: Atkinson Hyperlegible with enhanced spacing"
+                    .to_string()
             } else {
-                "Dark Mode"
-            }}
+                "Dyslexia-friendly typography disabled".to_string()
+            });
+        }
+        info!("Dyslexia font toggled to: {}", new_val);
+    };
+
+    view! {
+        <button
+            class="btn-theme-toggle btn-dyslexia-toggle"
+            on:click=on_toggle
+            title=move || {
+                if dyslexia.get() {
+                    "Dyslexia font enabled. Click to return to standard font."
+                } else {
+                    "Click to enable dyslexia-friendly font."
+                }
+            }
+            aria-pressed=move || if dyslexia.get() { "true" } else { "false" }
+            aria-label=move || {
+                if dyslexia.get() {
+                    "Dyslexia-friendly font enabled. Click to disable."
+                } else {
+                    "Dyslexia-friendly font disabled. Click to enable."
+                }
+            }
+        >
+            <span class="theme-icon">"🔤"</span>
+            <span class="theme-label">
+                {move || if dyslexia.get() { "Dyslexia: On" } else { "Dyslexia: Off" }}
+            </span>
         </button>
     }
 }

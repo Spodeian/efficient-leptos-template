@@ -1,0 +1,8 @@
+# leptosfmt configuration
+max_width = 100
+tab_spaces = 4
+indentation_style = "Auto"
+newline_style = "Auto"
+attr_value_brace_style = "WhenRequired"
+closing_tag_style = "Preserve"
+macro_names = ["view", "leptos::view"]
