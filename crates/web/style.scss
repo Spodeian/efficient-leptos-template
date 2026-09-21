@@ -1,3 +1,21 @@
+@import url('https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400;1,700&display=swap');
+
+@font-face {
+  font-family: 'Symbols Nerd Font';
+  src: url('https://cdn.jsdelivr.net/npm/@nerdfonts/font-webfont@v3.2.1/SymbolsNerdFont-Regular.woff2') format('woff2');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Symbols Nerd Font Mono';
+  src: url('https://cdn.jsdelivr.net/npm/@nerdfonts/font-webfont@v3.2.1/SymbolsNerdFontMono-Regular.woff2') format('woff2');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
 /* ==============================================================================
    Serverless Leptos & Desktop Template - Modern Responsive Theme Engine
    ============================================================================== */
@@ -5,6 +23,8 @@
 :root {
     --font-sans: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
     --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    --font-dyslexia: 'Atkinson Hyperlegible', 'OpenDyslexic', system-ui, -apple-system, sans-serif;
+    --font-nerd: 'Symbols Nerd Font Mono', 'Symbols Nerd Font', 'JetBrainsMono Nerd Font', 'FiraCode Nerd Font', 'CaskaydiaCove Nerd Font', 'Hack Nerd Font', 'MesloLGS Nerd Font', var(--font-mono);
     --radius-sm: 6px;
     --radius-md: 10px;
     --radius-lg: 16px;
@@ -16,54 +36,201 @@
     --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Dark Theme (Default) */
-:root, [data-theme="dark"] {
-    --bg-primary: #0d1117;
-    --bg-surface: #161b22;
-    --bg-surface-elevated: #21262d;
-    --bg-subtle: #30363d;
-    --border-color: #30363d;
-    --border-subtle: #21262d;
-    --text-primary: #f0f6fc;
-    --text-secondary: #8b949e;
-    --text-muted: #6e7681;
-    --accent-primary: #388bfd;
-    --accent-hover: #58a6ff;
-    --accent-bg: rgba(56, 139, 253, 0.15);
-    --success: #238636;
-    --success-hover: #2ea043;
-    --success-bg: rgba(35, 134, 54, 0.15);
-    --warning: #d29922;
-    --warning-bg: rgba(210, 153, 34, 0.15);
-    --danger: #da3633;
-    --danger-hover: #f85149;
-    --danger-bg: rgba(218, 54, 51, 0.15);
-    --modal-backdrop: rgba(0, 0, 0, 0.75);
+[data-dyslexia="true"] {
+    --font-sans: var(--font-dyslexia);
+    --font-mono: 'Atkinson Hyperlegible', monospace;
+    letter-spacing: 0.04em;
+    word-spacing: 0.08em;
+    line-height: 1.75;
 }
 
-/* Warm Light Theme */
-[data-theme="light"] {
-    --bg-primary: #fbf9f5;
-    --bg-surface: #ffffff;
-    --bg-surface-elevated: #f4f0ea;
-    --bg-subtle: #eae5dc;
-    --border-color: #d8d1c5;
-    --border-subtle: #e6e0d6;
-    --text-primary: #1f2328;
-    --text-secondary: #59636e;
-    --text-muted: #8c959f;
-    --accent-primary: #0969da;
-    --accent-hover: #1f883d;
-    --accent-bg: rgba(9, 105, 218, 0.1);
-    --success: #1a7f37;
-    --success-hover: #2da44e;
-    --success-bg: rgba(26, 127, 55, 0.1);
-    --warning: #9a6700;
-    --warning-bg: rgba(154, 103, 0, 0.1);
-    --danger: #cf222e;
-    --danger-hover: #a40e26;
-    --danger-bg: rgba(207, 34, 46, 0.1);
-    --modal-backdrop: rgba(15, 23, 42, 0.5);
+.font-nerd {
+    font-family: var(--font-nerd) !important;
+}
+
+// ==============================================================================
+// 4-Theme SCSS Palette Matrix (Hybrid Map -> Scoped CSS Custom Properties)
+// ==============================================================================
+
+$theme-tokens: (
+  "dark": (
+    "bg-primary": #0d1117,
+    "bg-surface": #161b22,
+    "bg-surface-elevated": #21262d,
+    "bg-subtle": #30363d,
+    "border-color": #30363d,
+    "border-subtle": #21262d,
+    "text-primary": #f0f6fc,
+    "text-secondary": #8b949e,
+    "text-muted": #6e7681,
+    "accent-primary": #388bfd,
+    "accent-hover": #58a6ff,
+    "accent-bg": rgba(56, 139, 253, 0.15),
+    "success": #238636,
+    "success-hover": #2ea043,
+    "success-bg": rgba(35, 134, 54, 0.15),
+    "warning": #d29922,
+    "warning-bg": rgba(210, 153, 34, 0.15),
+    "danger": #da3633,
+    "danger-hover": #f85149,
+    "danger-bg": rgba(218, 54, 51, 0.15),
+    "modal-backdrop": rgba(0, 0, 0, 0.75),
+    "focus-ring-color": #58a6ff,
+    "focus-ring-width": 2px,
+  ),
+  "light": (
+    "bg-primary": #fbf9f5,
+    "bg-surface": #ffffff,
+    "bg-surface-elevated": #f4f0ea,
+    "bg-subtle": #eae5dc,
+    "border-color": #d8d1c5,
+    "border-subtle": #e6e0d6,
+    "text-primary": #1f2328,
+    "text-secondary": #59636e,
+    "text-muted": #8c959f,
+    "accent-primary": #0969da,
+    "accent-hover": #1f883d,
+    "accent-bg": rgba(9, 105, 218, 0.1),
+    "success": #1a7f37,
+    "success-hover": #2da44e,
+    "success-bg": rgba(26, 127, 55, 0.1),
+    "warning": #9a6700,
+    "warning-bg": rgba(154, 103, 0, 0.1),
+    "danger": #cf222e,
+    "danger-hover": #a40e26,
+    "danger-bg": rgba(207, 34, 46, 0.1),
+    "modal-backdrop": rgba(15, 23, 42, 0.5),
+    "focus-ring-color": #0969da,
+    "focus-ring-width": 2px,
+  ),
+  "high-contrast-dark": (
+    "bg-primary": #000000,
+    "bg-surface": #050505,
+    "bg-surface-elevated": #101010,
+    "bg-subtle": #1a1a1a,
+    "border-color": #ffffff,
+    "border-subtle": #ffffff,
+    "text-primary": #ffffff,
+    "text-secondary": #ffffff,
+    "text-muted": #ffff00,
+    "accent-primary": #ffff00,
+    "accent-hover": #ffff66,
+    "accent-bg": rgba(255, 255, 0, 0.25),
+    "success": #00ff66,
+    "success-hover": #33ff88,
+    "success-bg": rgba(0, 255, 102, 0.25),
+    "warning": #ffff00,
+    "warning-bg": rgba(255, 255, 0, 0.25),
+    "danger": #ff3333,
+    "danger-hover": #ff6666,
+    "danger-bg": rgba(255, 51, 51, 0.25),
+    "modal-backdrop": rgba(0, 0, 0, 0.9),
+    "focus-ring-color": #ffff00,
+    "focus-ring-width": 3px,
+  ),
+  "high-contrast-light": (
+    "bg-primary": #ffffff,
+    "bg-surface": #ffffff,
+    "bg-surface-elevated": #ffffff,
+    "bg-subtle": #f0f0f0,
+    "border-color": #000000,
+    "border-subtle": #000000,
+    "text-primary": #000000,
+    "text-secondary": #000000,
+    "text-muted": #000088,
+    "accent-primary": #0000cc,
+    "accent-hover": #0000ee,
+    "accent-bg": rgba(0, 0, 204, 0.2),
+    "success": #006600,
+    "success-hover": #008800,
+    "success-bg": rgba(0, 102, 0, 0.2),
+    "warning": #884400,
+    "warning-bg": rgba(136, 68, 0, 0.2),
+    "danger": #cc0000,
+    "danger-hover": #ee0000,
+    "danger-bg": rgba(204, 0, 0, 0.2),
+    "modal-backdrop": rgba(0, 0, 0, 0.7),
+    "focus-ring-color": #0000cc,
+    "focus-ring-width": 3px,
+  ),
+);
+
+@each $theme-name, $tokens in $theme-tokens {
+  @if $theme-name == "dark" {
+    :root, [data-theme="dark"] {
+      @each $token, $value in $tokens {
+        --#{$token}: #{$value};
+      }
+    }
+  } @else {
+    [data-theme="#{$theme-name}"] {
+      @each $token, $value in $tokens {
+        --#{$token}: #{$value};
+      }
+    }
+  }
+}
+
+// Global Accessible Touch Target Mixin (WCAG 2.5.5 AAA / 2.5.8 AA)
+@mixin touch-target-accessible {
+  min-width: 44px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+// Global Accessible Focus Ring
+*:focus-visible {
+  outline: var(--focus-ring-width, 2px) solid var(--focus-ring-color, #58a6ff);
+  outline-offset: 2px;
+}
+
+// Global Reduced Motion Compliance
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Screen Reader Only Utility */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* Skip to Main Content Accessible Keyboard Shortcut */
+.skip-to-content {
+  position: absolute;
+  top: -100px;
+  left: 1.25rem;
+  z-index: 10000;
+  padding: 0.75rem 1.25rem;
+  background: var(--text-primary);
+  color: var(--bg-primary);
+  font-weight: 700;
+  font-size: 0.88rem;
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-xl);
+  transition: top 0.15s ease;
+  text-decoration: none;
+
+  &:focus {
+    top: 1.25rem;
+    outline: var(--focus-ring-width, 2px) solid var(--focus-ring-color, #58a6ff);
+    outline-offset: 2px;
+  }
 }
 
 /* Base Elements */
@@ -163,6 +330,7 @@ html, body {
 
 .mobile-menu-toggle {
     display: none;
+    @include touch-target-accessible;
     background: none;
     border: 1px solid var(--border-color);
     color: var(--text-primary);
@@ -182,6 +350,9 @@ html, body {
 }
 
 .drawer-btn {
+    min-height: 44px;
+    display: flex;
+    align-items: center;
     text-align: left;
     padding: 0.6rem 0.8rem;
     background: var(--bg-surface-elevated);
@@ -191,6 +362,7 @@ html, body {
     font-size: 0.9rem;
     font-weight: 500;
     cursor: pointer;
+    box-sizing: border-box;
 }
 
 .drawer-btn-danger {
@@ -203,6 +375,7 @@ html, body {
 
 /* Navigation Buttons */
 .nav-btn {
+    @include touch-target-accessible;
     background: var(--bg-surface-elevated);
     border: 1px solid var(--border-color);
     color: var(--text-primary);
@@ -233,6 +406,7 @@ html, body {
 }
 
 .btn-theme-toggle {
+    @include touch-target-accessible;
     background: var(--bg-surface-elevated);
     border: 1px solid var(--border-color);
     color: var(--text-primary);
@@ -380,6 +554,7 @@ html, body {
 
 /* Buttons */
 .btn {
+    @include touch-target-accessible;
     padding: 0.55rem 1.1rem;
     border-radius: var(--radius-sm);
     font-size: 0.9rem;
@@ -387,9 +562,6 @@ html, body {
     cursor: pointer;
     border: 1px solid transparent;
     transition: var(--transition);
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
     gap: 0.4rem;
 }
 
@@ -584,6 +756,7 @@ html, body {
 .priority-critical { background: var(--danger-bg); color: var(--danger); }
 
 .btn-delete {
+    @include touch-target-accessible;
     background: none;
     border: none;
     cursor: pointer;
@@ -662,6 +835,7 @@ html, body {
 }
 
 .modal-close-btn {
+    @include touch-target-accessible;
     background: none;
     border: none;
     color: var(--text-secondary);
@@ -694,6 +868,7 @@ html, body {
 }
 
 .tab-btn {
+    @include touch-target-accessible;
     padding: 0.4rem 0.8rem;
     background: var(--bg-surface-elevated);
     border: 1px solid var(--border-color);
@@ -843,3 +1018,47 @@ kbd {
         text-align: center;
     }
 }
+
+@media (max-width: 480px) {
+    .header-container {
+        padding: 0.5rem 0.75rem;
+    }
+    .brand-name {
+        font-size: 1.1rem;
+        overflow-wrap: anywhere;
+    }
+    .brand-subtitle {
+        display: none;
+    }
+    .main-wrapper {
+        padding: 1rem 0.75rem;
+    }
+    .item-card {
+        padding: 0.85rem;
+    }
+    .item-title, .item-description {
+        overflow-wrap: anywhere;
+    }
+    .modal-content {
+        padding: 1.25rem 0.75rem;
+        width: 96%;
+    }
+}
+
+@media (max-width: 320px) {
+    html {
+        font-size: 14px;
+    }
+    .main-wrapper {
+        padding: 0.75rem 0.4rem;
+    }
+    .btn-theme-toggle {
+        min-width: 40px;
+        padding: 0.4rem 0.6rem;
+    }
+    .filter-btn {
+        padding: 0.35rem 0.5rem;
+        font-size: 0.8rem;
+    }
+}
+

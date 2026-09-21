@@ -10,6 +10,7 @@ use wasm_bindgen::JsCast;
 
 pub const STORAGE_KEY_STATE: &str = "serverless_leptos_app_state";
 pub const STORAGE_KEY_THEME: &str = "serverless_leptos_theme";
+pub const STORAGE_KEY_DYSLEXIA: &str = "serverless_leptos_dyslexia";
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
 pub enum StorageBackend {

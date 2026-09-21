@@ -5,7 +5,10 @@ use leptos::prelude::*;
 use shared::{AppState, Item, Priority};
 
 #[component]
-pub fn ItemList(state: RwSignal<AppState>) -> impl IntoView {
+pub fn ItemList(
+    state: RwSignal<AppState>,
+    #[prop(optional)] announcement: Option<RwSignal<String>>,
+) -> impl IntoView {
     let new_title = RwSignal::new(String::new());
     let new_description = RwSignal::new(String::new());
     let new_priority = RwSignal::new(Priority::Medium);
@@ -26,7 +29,7 @@ pub fn ItemList(state: RwSignal<AppState>) -> impl IntoView {
         let id = format!("item-{}", js_sys_time());
         let item = Item {
             id,
-            title,
+            title: title.clone(),
             description: desc,
             priority,
             completed: false,
@@ -38,23 +41,48 @@ pub fn ItemList(state: RwSignal<AppState>) -> impl IntoView {
             save_state_to_storage(s);
         });
 
+        if let Some(announcer) = announcement {
+            announcer.set(format!("Added new task: {title}"));
+        }
+
         new_title.set(String::new());
         new_description.set(String::new());
         new_priority.set(Priority::Medium);
     };
 
     let toggle_item = move |id: String| {
+        let mut completed_state = false;
+        let mut item_title = String::new();
         state.update(|s| {
-            s.collection.toggle_completed(&id);
+            if let Some(item) = s.collection.items.iter_mut().find(|i| i.id == id) {
+                item.completed = !item.completed;
+                completed_state = item.completed;
+                item_title = item.title.clone();
+            }
             save_state_to_storage(s);
         });
+        if let Some(announcer) = announcement {
+            let status = if completed_state {
+                "completed"
+            } else {
+                "marked pending"
+            };
+            announcer.set(format!("Task {status}: {item_title}"));
+        }
     };
 
     let remove_item = move |id: String| {
+        let mut item_title = String::new();
         state.update(|s| {
-            s.collection.remove(&id);
+            if let Some(pos) = s.collection.items.iter().position(|i| i.id == id) {
+                item_title = s.collection.items[pos].title.clone();
+                s.collection.items.remove(pos);
+            }
             save_state_to_storage(s);
         });
+        if let Some(announcer) = announcement {
+            announcer.set(format!("Deleted task: {item_title}"));
+        }
     };
 
     // Filtered items memo
@@ -99,25 +127,34 @@ pub fn ItemList(state: RwSignal<AppState>) -> impl IntoView {
                 </div>
                 <div class="metric-card metric-completed">
                     <span class="metric-label">"Completed"</span>
-                    <span class="metric-value">{move || state.get().collection.completed_count()}</span>
+                    <span class="metric-value">
+                        {move || state.get().collection.completed_count()}
+                    </span>
                 </div>
                 <div class="metric-card metric-pending">
                     <span class="metric-label">"Pending Tasks"</span>
-                    <span class="metric-value">{move || state.get().collection.pending_count()}</span>
+                    <span class="metric-value">
+                        {move || state.get().collection.pending_count()}
+                    </span>
                 </div>
                 <div class="metric-card metric-urgent">
                     <span class="metric-label">"High & Critical"</span>
-                    <span class="metric-value">{move || state.get().collection.high_priority_count()}</span>
+                    <span class="metric-value">
+                        {move || state.get().collection.high_priority_count()}
+                    </span>
                 </div>
             </div>
 
             // Create New Item Card
             <section class="card form-card">
                 <h2 class="card-title">"➕ Add New Task or Item"</h2>
-                <form on:submit=move |ev| {
-                    ev.prevent_default();
-                    add_item();
-                } class="create-item-form">
+                <form
+                    on:submit=move |ev| {
+                        ev.prevent_default();
+                        add_item();
+                    }
+                    class="create-item-form"
+                >
                     <div class="form-row">
                         <div class="form-group flex-2">
                             <label for="item-title">"Title"</label>
@@ -146,10 +183,30 @@ pub fn ItemList(state: RwSignal<AppState>) -> impl IntoView {
                                     new_priority.set(p);
                                 }
                             >
-                                <option value="Medium" selected=move || new_priority.get() == Priority::Medium>"Medium"</option>
-                                <option value="Low" selected=move || new_priority.get() == Priority::Low>"Low"</option>
-                                <option value="High" selected=move || new_priority.get() == Priority::High>"High"</option>
-                                <option value="Critical" selected=move || new_priority.get() == Priority::Critical>"Critical"</option>
+                                <option
+                                    value="Medium"
+                                    selected=move || new_priority.get() == Priority::Medium
+                                >
+                                    "Medium"
+                                </option>
+                                <option
+                                    value="Low"
+                                    selected=move || new_priority.get() == Priority::Low
+                                >
+                                    "Low"
+                                </option>
+                                <option
+                                    value="High"
+                                    selected=move || new_priority.get() == Priority::High
+                                >
+                                    "High"
+                                </option>
+                                <option
+                                    value="Critical"
+                                    selected=move || new_priority.get() == Priority::Critical
+                                >
+                                    "Critical"
+                                </option>
                             </select>
                         </div>
                     </div>
@@ -187,17 +244,20 @@ pub fn ItemList(state: RwSignal<AppState>) -> impl IntoView {
                             prop:value=move || search_query.get()
                             on:input=move |ev| search_query.set(event_target_value(&ev))
                         />
-                        {move || if !search_query.get().is_empty() {
-                            view! {
-                                <button
-                                    class="btn-clear-search"
-                                    on:click=move |_| search_query.set(String::new())
-                                >
-                                    "✕"
-                                </button>
-                            }.into_any()
-                        } else {
-                            view! {}.into_any()
+                        {move || {
+                            if !search_query.get().is_empty() {
+                                view! {
+                                    <button
+                                        class="btn-clear-search"
+                                        on:click=move |_| search_query.set(String::new())
+                                    >
+                                        "✕"
+                                    </button>
+                                }
+                                    .into_any()
+                            } else {
+                                view! {}.into_any()
+                            }
                         }}
                     </div>
 
@@ -240,7 +300,13 @@ pub fn ItemList(state: RwSignal<AppState>) -> impl IntoView {
                 <div class="items-header">
                     <h3>"Items & Tasks"</h3>
                     <span class="items-count-badge">
-                        {move || format!("Showing {} of {}", filtered_items.get().len(), state.get().collection.total_count())}
+                        {move || {
+                            format!(
+                                "Showing {} of {}",
+                                filtered_items.get().len(),
+                                state.get().collection.total_count(),
+                            )
+                        }}
                     </span>
                 </div>
 
@@ -256,7 +322,10 @@ pub fn ItemList(state: RwSignal<AppState>) -> impl IntoView {
                             let priority_label = item.priority.label();
 
                             view! {
-                                <div class=format!("item-card {}", if is_completed { "item-completed" } else { "" })>
+                                <div class=format!(
+                                    "item-card {}",
+                                    if is_completed { "item-completed" } else { "" },
+                                )>
                                     <div class="item-status">
                                         <input
                                             type="checkbox"
@@ -269,12 +338,14 @@ pub fn ItemList(state: RwSignal<AppState>) -> impl IntoView {
                                     <div class="item-content">
                                         <div class="item-header-row">
                                             <h4 class="item-title">{item.title}</h4>
-                                            <span class=format!("badge {}", priority_class)>
-                                                {priority_label}
-                                            </span>
+                                            <span class=format!(
+                                                "badge {}",
+                                                priority_class,
+                                            )>{priority_label}</span>
                                         </div>
                                         {if !item.description.is_empty() {
-                                            view! { <p class="item-description">{item.description}</p> }.into_any()
+                                            view! { <p class="item-description">{item.description}</p> }
+                                                .into_any()
                                         } else {
                                             view! {}.into_any()
                                         }}
@@ -294,15 +365,20 @@ pub fn ItemList(state: RwSignal<AppState>) -> impl IntoView {
                         }
                     />
 
-                    {move || if filtered_items.get().is_empty() {
-                        view! {
-                            <div class="empty-state">
-                                <h4>"No items match your filter"</h4>
-                                <p>"Try adjusting your search query, priority filter, or add a new item above."</p>
-                            </div>
-                        }.into_any()
-                    } else {
-                        view! {}.into_any()
+                    {move || {
+                        if filtered_items.get().is_empty() {
+                            view! {
+                                <div class="empty-state">
+                                    <h4>"No items match your filter"</h4>
+                                    <p>
+                                        "Try adjusting your search query, priority filter, or add a new item above."
+                                    </p>
+                                </div>
+                            }
+                                .into_any()
+                        } else {
+                            view! {}.into_any()
+                        }
                     }}
                 </div>
             </section>
