@@ -7,6 +7,10 @@ license.workspace = true
 repository.workspace = true
 description = "Native desktop runner for the Serverless & Desktop Leptos Template powered by Tauri v2"
 
+[lib]
+name = "desktop_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
 [build-dependencies]
 tauri-build = { workspace = true }
 

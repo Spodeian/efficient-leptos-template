@@ -11,6 +11,7 @@
 
 ## Phase 2: Performance & Benchmarking [CURRENT]
 - [x] Zero-warning Clippy enforcement.
+- [x] Universal `cargo-ndk` Android mobile deployment pipeline (`scripts/build-android.ps1`, `scripts/build-android.sh`).
 - [ ] Criterion benchmark suite for SSR component rendering and state serialization (`benches/`).
 - [ ] Hydration payload size optimization.
 

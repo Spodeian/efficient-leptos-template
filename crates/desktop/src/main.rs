@@ -3,24 +3,6 @@
 #[global_allocator]
 static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
 
-use tracing::info;
-use tracing_subscriber::EnvFilter;
-
 fn main() {
-    tracing_subscriber::fmt()
-        .with_env_filter(
-            EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| EnvFilter::new("info,desktop=debug")),
-        )
-        .init();
-
-    info!("Starting Leptos Native Desktop Application (Tauri v2)...");
-
-    tauri::Builder::default()
-        .setup(|_app| {
-            info!("Tauri window setup successfully initialized");
-            Ok(())
-        })
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+    desktop_lib::run();
 }

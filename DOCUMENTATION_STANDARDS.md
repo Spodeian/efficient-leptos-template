@@ -39,4 +39,5 @@ pub fn Navbar() -> impl IntoView {
 Before opening PRs to `main`:
 - [ ] `cargo clippy --workspace --all-targets -- -D warnings` passes with 0 warnings.
 - [ ] `cargo test --workspace` passes 100% of integration tests.
+- [ ] Android mobile build (`scripts/build-android.ps1` / `scripts/build-android.sh`) verifies with `cargo-ndk`.
 - [ ] No `DOCUMENTATION_STANDARDS.md` or internal roadmap files are included on `main`.
