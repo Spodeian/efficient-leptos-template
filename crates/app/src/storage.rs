@@ -2,6 +2,9 @@
 
 use serde::{Deserialize, Serialize};
 use shared::AppState;
+use spodeian_cache::{ContentAddressedStorage, PreferentialRouter};
+#[allow(unused_imports)]
+use spodeian_cache::StorageTier;
 #[allow(unused_imports)]
 use tracing::{error, info, warn};
 
@@ -17,6 +20,8 @@ pub enum StorageBackend {
     #[default]
     LocalStorage,
     IndexedDb,
+    CacheApi,
+    NativeCas,
     MemoryOnly,
 }
 
@@ -24,7 +29,9 @@ impl StorageBackend {
     pub fn label(self) -> &'static str {
         match self {
             Self::LocalStorage => "Local Storage (Fast Tier)",
-            Self::IndexedDb => "IndexedDB (Extended Quota Tier)",
+            Self::IndexedDb => "IndexedDB (Structured Relational Tier)",
+            Self::CacheApi => "Cache API (Large Binary Weights Tier)",
+            Self::NativeCas => "Native CAS (Content-Addressed Disk Tier)",
             Self::MemoryOnly => "In-Memory Only (Ephemeral)",
         }
     }
@@ -132,48 +139,72 @@ pub fn load_state_from_storage() -> Option<AppState> {
     None
 }
 
-/// Saves the current application state using multi-tiered fallback (localStorage -> IndexedDB).
+/// Saves the current application state using preferential multi-tiered routing:
+/// - Cache API for large binaries / models (> 512 KB)
+/// - IndexedDB for structured relational states
+/// - LocalStorage for lightweight config (< 16 KB)
+/// - ContentAddressedStorage on native desktop & mobile
 pub fn save_state_to_storage(state: &AppState) -> StorageBackend {
-    #[cfg(target_arch = "wasm32")]
-    {
-        if let Some(window) = web_sys::window() {
-            if let Ok(json_str) = shared::export_to_json(state) {
-                let local_storage_failed = true;
-                if let Ok(Some(storage)) = window.local_storage() {
-                    match storage.set_item(STORAGE_KEY_STATE, &json_str) {
-                        Ok(()) => {
-                            return StorageBackend::LocalStorage;
-                        }
-                        Err(err) => {
-                            warn!(
-                                "localStorage save failed: {:?}, migrating to IndexedDB",
-                                err
-                            );
-                        }
-                    }
-                }
+    if let Ok(json_str) = shared::export_to_json(state) {
+        let size = json_str.len();
+        let is_large_or_binary = size > 512 * 1024;
+        let recommended_tier = PreferentialRouter::determine_tier(size, "application/json", is_large_or_binary);
+        let _ = &recommended_tier;
 
-                if local_storage_failed {
+        #[cfg(target_arch = "wasm32")]
+        {
+            if let Some(window) = web_sys::window() {
+                // Tier 1 (Large/Binary): Cache API
+                if recommended_tier == StorageTier::CacheApi {
                     if let Ok(func) = js_sys::Reflect::get(
                         &window,
-                        &wasm_bindgen::JsValue::from_str("__saveToIndexedDB"),
+                        &wasm_bindgen::JsValue::from_str("__saveToCacheApi"),
                     ) {
                         if let Some(func) = func.dyn_ref::<js_sys::Function>() {
                             let k = wasm_bindgen::JsValue::from_str(STORAGE_KEY_STATE);
                             let v = wasm_bindgen::JsValue::from_str(&json_str);
                             let _ = func.call2(&window, &k, &v);
-                            info!("State migrated to IndexedDB fallback tier");
-                            return StorageBackend::IndexedDb;
+                            info!("Preferentially stored large asset to Cache API [{}]", STORAGE_KEY_STATE);
+                            return StorageBackend::CacheApi;
                         }
+                    }
+                }
+
+                // Tier 2: Try localStorage for fast session data if small
+                if size < 16 * 1024 {
+                    if let Ok(Some(storage)) = window.local_storage() {
+                        if storage.set_item(STORAGE_KEY_STATE, &json_str).is_ok() {
+                            return StorageBackend::LocalStorage;
+                        }
+                    }
+                }
+
+                // Tier 3: IndexedDB for structured entities and fallback
+                if let Ok(func) = js_sys::Reflect::get(
+                    &window,
+                    &wasm_bindgen::JsValue::from_str("__saveToIndexedDB"),
+                ) {
+                    if let Some(func) = func.dyn_ref::<js_sys::Function>() {
+                        let k = wasm_bindgen::JsValue::from_str(STORAGE_KEY_STATE);
+                        let v = wasm_bindgen::JsValue::from_str(&json_str);
+                        let _ = func.call2(&window, &k, &v);
+                        info!("Saved structured state to IndexedDB [{}]", STORAGE_KEY_STATE);
+                        return StorageBackend::IndexedDb;
                     }
                 }
             }
         }
+
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            let cas_dir = std::env::temp_dir().join("leptos_template_cas_store");
+            if let Ok(cas) = ContentAddressedStorage::new(&cas_dir) {
+                let _ = cas.put(json_str.as_bytes());
+                return StorageBackend::NativeCas;
+            }
+        }
     }
-    #[cfg(not(target_arch = "wasm32"))]
-    {
-        let _ = state;
-    }
+
     StorageBackend::MemoryOnly
 }
 

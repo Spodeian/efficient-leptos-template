@@ -58,6 +58,8 @@ shared = { path = "crates/shared" }
 app = { path = "crates/app" }
 tauri = { version = "2", features = ["config-toml"] }
 tauri-build = { version = "2", features = ["config-toml"] }
+spodeian-cache = { path = "../spodeian-core/crates/spodeian-cache" }
+spodeian-tokens = { path = "../spodeian-core/crates/spodeian-tokens" }
 
 [profile.release]
 opt-level = 3
