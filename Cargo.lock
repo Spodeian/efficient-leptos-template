@@ -87,7 +87,9 @@ dependencies = [
  "serde_json",
  "shared",
  "spodeian-cache",
+ "spodeian-export",
  "spodeian-tokens",
+ "spodeian-web-utils",
  "thiserror 2.0.20",
  "tracing",
  "wasm-bindgen",
@@ -835,6 +837,7 @@ dependencies = [
  "leptos",
  "mimalloc",
  "shared",
+ "spodeian-telemetry",
  "tauri",
  "tauri-build",
  "tracing",
@@ -3837,6 +3840,8 @@ dependencies = [
  "miniz_oxide",
  "serde",
  "serde_json",
+ "spodeian-export",
+ "spodeian-tokens",
  "thiserror 2.0.20",
 ]
 
@@ -3954,11 +3959,42 @@ dependencies = [
 ]
 
 [[package]]
+name = "spodeian-export"
+version = "0.1.0"
+dependencies = [
+ "bson",
+ "miniz_oxide",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.20",
+]
+
+[[package]]
+name = "spodeian-telemetry"
+version = "0.1.0"
+dependencies = [
+ "console_error_panic_hook",
+ "tracing",
+ "tracing-subscriber",
+ "tracing-web",
+]
+
+[[package]]
 name = "spodeian-tokens"
 version = "0.1.0"
 dependencies = [
  "serde",
  "serde_json",
+]
+
+[[package]]
+name = "spodeian-web-utils"
+version = "0.1.0"
+dependencies = [
+ "js-sys",
+ "tracing",
+ "wasm-bindgen",
+ "web-sys",
 ]
 
 [[package]]
@@ -5114,6 +5150,7 @@ dependencies = [
  "js-sys",
  "leptos",
  "shared",
+ "spodeian-telemetry",
  "tracing",
  "tracing-subscriber",
  "tracing-web",

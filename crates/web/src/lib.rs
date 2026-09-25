@@ -4,15 +4,8 @@ use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen(start)]
 pub fn main_js() {
-    // Better panic errors in browser console
-    console_error_panic_hook::set_once();
+    spodeian_telemetry::init_default();
 
-    // Initialize tracing logging for browser console
-    tracing_subscriber::fmt()
-        .with_writer(tracing_web::MakeConsoleWriter)
-        .without_time()
-        .with_ansi(false)
-        .init();
 
     #[cfg(feature = "hydrate")]
     {
