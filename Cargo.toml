@@ -77,7 +77,7 @@ spodeian-export = { git = "https://github.com/Spodeian/spodeian-core", tag = "v3
 spodeian-web-utils = { git = "https://github.com/Spodeian/spodeian-core", tag = "v3.0.0", version = "^1.1.0" }
 spodeian-persist = { git = "https://github.com/Spodeian/spodeian-core", tag = "v3.0.0", version = "^0.1.0" }
 spodeian-leptos-ui = { git = "https://github.com/Spodeian/spodeian-core", tag = "v3.0.0", version = "^0.1.0" }
-criterion = "0.5"
+criterion = "0.8"
 proptest = "1"
 pollster = "0.4"
 wasm-bindgen-test = "0.3"
