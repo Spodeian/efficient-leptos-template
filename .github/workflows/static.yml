@@ -43,7 +43,7 @@ jobs:
       # scripts/build-web.sh pins cargo-leptos (and through it Sass and wasm-opt) and
       # installs the wasm-bindgen CLI at the version in Cargo.lock.
       - name: Cache Build Tools
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: |
             ~/.cargo/bin/cargo-leptos
