@@ -103,7 +103,7 @@ dependencies = [
  "spodeian-persist",
  "spodeian-telemetry",
  "spodeian-tokens",
- "spodeian-web-utils",
+ "spodeian-web-utils 1.1.0 (git+https://github.com/Spodeian/spodeian-core?tag=v3.0.1)",
  "thiserror 2.0.21",
  "tracing",
  "wasm-bindgen",
@@ -1141,7 +1141,7 @@ dependencies = [
  "libc",
  "option-ext",
  "redox_users",
- "windows-sys 0.61.2",
+ "windows-sys 0.59.0",
 ]
 
 [[package]]
@@ -1342,7 +1342,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e35d6e78f4cebb90e51d543db8fe41528851d6deeef6ef21ebd4bfdc1e784776"
 dependencies = [
  "libc",
- "windows-sys 0.61.2",
+ "windows-sys 0.59.0",
 ]
 
 [[package]]
@@ -2264,7 +2264,7 @@ checksum = "3640c1c38b8e4e43584d8df18be5fc6b0aa314ce6ebf51b53313d4306cca8e46"
 dependencies = [
  "hermit-abi",
  "libc",
- "windows-sys 0.61.2",
+ "windows-sys 0.59.0",
 ]
 
 [[package]]
@@ -3002,7 +3002,7 @@ version = "0.50.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7957b9740744892f114936ab4a57b3f487491bbeafaf8083688b16841a4240e5"
 dependencies = [
- "windows-sys 0.61.2",
+ "windows-sys 0.59.0",
 ]
 
 [[package]]
@@ -4001,7 +4001,7 @@ dependencies = [
  "errno",
  "libc",
  "linux-raw-sys",
- "windows-sys 0.61.2",
+ "windows-sys 0.59.0",
 ]
 
 [[package]]
@@ -4600,7 +4600,7 @@ dependencies = [
  "spodeian-persist",
  "spodeian-telemetry",
  "spodeian-tokens",
- "spodeian-web-utils",
+ "spodeian-web-utils 1.1.0 (git+https://github.com/Spodeian/spodeian-core?tag=v3.1.0)",
  "wasm-bindgen",
  "web-sys",
 ]
@@ -4622,7 +4622,7 @@ dependencies = [
  "serde",
  "serde_json",
  "spodeian-cache",
- "spodeian-web-utils",
+ "spodeian-web-utils 1.1.0 (git+https://github.com/Spodeian/spodeian-core?tag=v3.1.0)",
  "thiserror 2.0.21",
  "tracing",
  "wasm-bindgen",
@@ -4655,6 +4655,20 @@ dependencies = [
 [[package]]
 name = "spodeian-web-utils"
 version = "1.1.0"
+source = "git+https://github.com/Spodeian/spodeian-core?tag=v3.0.1#9eb132c7fdc046aa297fa95d80db2a91011413f8"
+dependencies = [
+ "base64 0.22.1",
+ "js-sys",
+ "sha2",
+ "tracing",
+ "wasm-bindgen",
+ "wasm-bindgen-futures",
+ "web-sys",
+]
+
+[[package]]
+name = "spodeian-web-utils"
+version = "1.1.0"
 source = "git+https://github.com/Spodeian/spodeian-core?tag=v3.1.0#6704614ca800bf092216e9a49ff7b67aefd98c7e"
 dependencies = [
  "base64 0.22.1",
@@ -4674,7 +4688,7 @@ dependencies = [
  "leptos",
  "leptos_axum",
  "shared",
- "spodeian-web-utils",
+ "spodeian-web-utils 1.1.0 (git+https://github.com/Spodeian/spodeian-core?tag=v3.0.1)",
  "tokio",
 ]
 
@@ -5108,7 +5122,7 @@ dependencies = [
  "getrandom 0.4.3",
  "once_cell",
  "rustix",
- "windows-sys 0.61.2",
+ "windows-sys 0.59.0",
 ]
 
 [[package]]
@@ -6085,7 +6099,7 @@ version = "0.1.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c2a7b1c03c876122aa43f3020e6c3c3ee5c05081c9a00739faf7503aeba10d22"
 dependencies = [
- "windows-sys 0.61.2",
+ "windows-sys 0.59.0",
 ]
 
 [[package]]
