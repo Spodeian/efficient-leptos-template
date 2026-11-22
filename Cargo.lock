@@ -102,7 +102,7 @@ dependencies = [
  "spodeian-leptos-ui",
  "spodeian-persist",
  "spodeian-telemetry",
- "spodeian-tokens",
+ "spodeian-tokens 1.1.0 (git+https://github.com/Spodeian/spodeian-core?tag=v3.0.1)",
  "spodeian-web-utils",
  "thiserror 2.0.21",
  "tracing",
@@ -1141,7 +1141,7 @@ dependencies = [
  "libc",
  "option-ext",
  "redox_users",
- "windows-sys 0.61.2",
+ "windows-sys 0.59.0",
 ]
 
 [[package]]
@@ -1342,7 +1342,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e35d6e78f4cebb90e51d543db8fe41528851d6deeef6ef21ebd4bfdc1e784776"
 dependencies = [
  "libc",
- "windows-sys 0.61.2",
+ "windows-sys 0.59.0",
 ]
 
 [[package]]
@@ -2264,7 +2264,7 @@ checksum = "3640c1c38b8e4e43584d8df18be5fc6b0aa314ce6ebf51b53313d4306cca8e46"
 dependencies = [
  "hermit-abi",
  "libc",
- "windows-sys 0.61.2",
+ "windows-sys 0.59.0",
 ]
 
 [[package]]
@@ -3002,7 +3002,7 @@ version = "0.50.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7957b9740744892f114936ab4a57b3f487491bbeafaf8083688b16841a4240e5"
 dependencies = [
- "windows-sys 0.61.2",
+ "windows-sys 0.59.0",
 ]
 
 [[package]]
@@ -4001,7 +4001,7 @@ dependencies = [
  "errno",
  "libc",
  "linux-raw-sys",
- "windows-sys 0.61.2",
+ "windows-sys 0.59.0",
 ]
 
 [[package]]
@@ -4448,7 +4448,7 @@ dependencies = [
  "spodeian-leptos-ui",
  "spodeian-parallel",
  "spodeian-persist",
- "spodeian-tokens",
+ "spodeian-tokens 1.1.0 (git+https://github.com/Spodeian/spodeian-core?tag=v3.0.1)",
  "thiserror 2.0.21",
 ]
 
@@ -4599,7 +4599,7 @@ dependencies = [
  "serde_json",
  "spodeian-persist",
  "spodeian-telemetry",
- "spodeian-tokens",
+ "spodeian-tokens 1.1.0 (git+https://github.com/Spodeian/spodeian-core?tag=v3.1.0)",
  "spodeian-web-utils",
  "wasm-bindgen",
  "web-sys",
@@ -4641,6 +4641,15 @@ dependencies = [
  "tracing",
  "tracing-subscriber",
  "tracing-web",
+]
+
+[[package]]
+name = "spodeian-tokens"
+version = "1.1.0"
+source = "git+https://github.com/Spodeian/spodeian-core?tag=v3.0.1#9eb132c7fdc046aa297fa95d80db2a91011413f8"
+dependencies = [
+ "serde",
+ "serde_json",
 ]
 
 [[package]]
@@ -5108,7 +5117,7 @@ dependencies = [
  "getrandom 0.4.3",
  "once_cell",
  "rustix",
- "windows-sys 0.61.2",
+ "windows-sys 0.59.0",
 ]
 
 [[package]]
@@ -6085,7 +6094,7 @@ version = "0.1.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c2a7b1c03c876122aa43f3020e6c3c3ee5c05081c9a00739faf7503aeba10d22"
 dependencies = [
- "windows-sys 0.61.2",
+ "windows-sys 0.59.0",
 ]
 
 [[package]]
