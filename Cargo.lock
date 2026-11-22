@@ -434,6 +434,27 @@ dependencies = [
 ]
 
 [[package]]
+name = "bson"
+version = "3.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b3f109694c4f45353972af96bf97d8a057f82e2d6e496457f4d135b9867a518c"
+dependencies = [
+ "ahash",
+ "base64 0.22.1",
+ "bitvec",
+ "getrandom 0.3.4",
+ "hex",
+ "indexmap 2.14.0",
+ "js-sys",
+ "rand 0.9.5",
+ "serde_bytes",
+ "simdutf8",
+ "thiserror 2.0.21",
+ "time",
+ "uuid",
+]
+
+[[package]]
 name = "bumpalo"
 version = "3.20.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4438,7 +4459,7 @@ name = "shared"
 version = "0.2.3"
 dependencies = [
  "base64 0.22.1",
- "bson",
+ "bson 3.1.0",
  "criterion",
  "miniz_oxide",
  "proptest",
@@ -4583,7 +4604,7 @@ name = "spodeian-export"
 version = "2.0.0"
 source = "git+https://github.com/Spodeian/spodeian-core?tag=v3.1.0#6704614ca800bf092216e9a49ff7b67aefd98c7e"
 dependencies = [
- "bson",
+ "bson 2.15.0",
  "miniz_oxide",
  "serde",
  "serde_json",
