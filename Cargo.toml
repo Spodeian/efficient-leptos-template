@@ -56,8 +56,8 @@ web-sys = { version = "0.3", features = [
 js-sys = "0.3"
 console_error_panic_hook = "0.1"
 bson = "2"
-miniz_oxide = "0.9"
-base64 = "0.23"
+# Keep in step with spodeian-core so builds carry one copy (Dependabot ignores it).
+base64 = "0.22"
 sha2 = "0.10"
 shared = { path = "crates/shared" }
 app = { path = "crates/app" }
@@ -110,6 +110,13 @@ wasm-opt-features = [
     "--strip-producers",
 ]
 env = "PROD"
+
+# Lint policy shared by every crate (`[lints] workspace = true`).
+[workspace.lints.rust]
+unsafe_code = "deny"
+
+[workspace.lints.clippy]
+unwrap_used = "warn"
 
 [profile.release]
 opt-level = 3

@@ -20,3 +20,6 @@ spodeian-web-utils = { workspace = true }
 # server-side here, so the feature only needs to exist.
 [features]
 ssr = []
+
+[lints]
+workspace = true

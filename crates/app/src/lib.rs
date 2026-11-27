@@ -1,6 +1,5 @@
 #![recursion_limit = "256"]
 #![warn(missing_docs)]
-#![warn(clippy::unwrap_used)]
 //! Main Leptos UI application view controller, layout components, and state synchronization.
 #![allow(clippy::unit_arg)]
 #![allow(clippy::unused_unit)]
