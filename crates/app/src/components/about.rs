@@ -1,7 +1,9 @@
 //! About & Architecture view page component.
 
 use crate::storage::StorageDiagnostics;
+// {% if include_tauri_desktop %}
 use crate::tauri_bridge::runtime_environment_label;
+// {% endif %}
 use leptos::prelude::*;
 use shared::{AppState, ComputeRuntimeSummary};
 
@@ -83,6 +85,7 @@ pub fn AboutPage(
                             "Pre-renders static routes to HTML, emits sitemap.xml & robots.txt, and injects SHA-256 CSP script hashes into _headers."
                         </span>
                     </div>
+                    // {% if include_tauri_desktop %}
                     <div style="display: flex; gap: 16px; align-items: baseline; padding: 8px 12px; background: var(--bg-surface-elevated); border-radius: 8px;">
                         <code style="font-weight: 700; color: var(--accent); min-width: 140px;">
                             "crates/desktop"
@@ -91,6 +94,7 @@ pub fn AboutPage(
                             "Native Tauri v2 desktop/mobile runner registering native Rayon IPC commands (desktop_runtime_summary, compute_harmonic_sweep_native) with mimalloc."
                         </span>
                     </div>
+                    // {% endif %}
                 </div>
             </div>
 
@@ -183,6 +187,7 @@ pub fn AboutPage(
                             }}
                         </div>
                     </div>
+                    // {% if include_tauri_desktop %}
                     <div style="padding: 12px; background: var(--bg-surface-elevated); border-radius: 8px;">
                         <div style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase;">
                             "Runtime Environment"
@@ -191,6 +196,7 @@ pub fn AboutPage(
                             {runtime_environment_label()}
                         </div>
                     </div>
+                    // {% endif %}
                     <div style="padding: 12px; background: var(--bg-surface-elevated); border-radius: 8px;">
                         <div style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase;">
                             "Compute & WGSL Kernels"

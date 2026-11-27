@@ -365,6 +365,7 @@ fn test_about_page_renders_workspace_version() {
     );
 }
 
+// {% if include_tauri_desktop %}
 #[cfg(feature = "ssr")]
 #[test]
 fn test_theme_prepaint_script_matches_index_html() {
@@ -393,6 +394,7 @@ fn test_theme_prepaint_script_matches_index_html() {
     assert!(shell_script.contains("serverless_leptos_theme"));
     assert!(shell_script.contains("serverless_leptos_dyslexia"));
 }
+// {% endif %}
 
 #[cfg(feature = "ssr")]
 #[test]

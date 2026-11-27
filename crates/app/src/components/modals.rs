@@ -217,10 +217,12 @@ pub fn HelpModal(
                                             <strong>"crates/web & crates/ssg:"</strong>
                                             " WASM browser entrypoints, static route pre-rendering, auto-generated sitemap/robots, and hash-stamped PWA Service Worker."
                                         </li>
+                                        // {% if include_tauri_desktop %}
                                         <li>
                                             <strong>"crates/desktop:"</strong>
                                             " Tauri v2 native desktop runner with strict CSP and mimalloc."
                                         </li>
+                                        // {% endif %}
                                     </ul>
                                 </section>
 

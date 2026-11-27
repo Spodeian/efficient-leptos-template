@@ -9,7 +9,9 @@ pub mod components;
 #[cfg(feature = "ssr")]
 pub mod shell;
 pub mod storage;
+// {% if include_tauri_desktop %}
 pub mod tauri_bridge;
+// {% endif %}
 
 #[cfg(feature = "ssr")]
 pub use shell::shell;
@@ -35,7 +37,7 @@ use tracing::info;
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::JsCast;
 
-/// Sets the document title, description, canonical link, and OpenGraph tags for one page.
+/// Sets the document title, description, canonical link, Twitter card, and OpenGraph tags for one page.
 #[component]
 fn PageMeta(page: AppPage) -> impl IntoView {
     let title = format!("{} | Leptos Serverless & Desktop Template", page.label());
@@ -43,6 +45,7 @@ fn PageMeta(page: AppPage) -> impl IntoView {
     view! {
         <Title text=title.clone() />
         <Meta name="description" content=desc />
+        <Meta name="twitter:card" content="summary" />
         <Meta property="og:type" content="website" />
         <Meta property="og:title" content=title />
         <Meta property="og:description" content=desc />

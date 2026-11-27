@@ -10,6 +10,8 @@ ignore = [
     "Cargo.lock",
     "CHANGELOG.md",
     "CONTRIBUTING.md",
+    # CI that tests this template itself (runs cargo generate); meaningless in a generated project.
+    ".github/workflows/template.yml",
 ]
 # Copied verbatim: GitHub `${{ }}` expressions, `{{` in format! strings and binaries break Liquid.
 exclude = [
@@ -23,7 +25,9 @@ exclude = [
 
 [placeholders.include_tauri_desktop]
 type = "bool"
-prompt = "Include the Tauri v2 native desktop runner crate (crates/desktop)?"
+# false = pure serverless edge build: static SSR + WASM hydration only (no Tauri, CSR, Trunk or
+# mobile targets). This replaces the former efficient-leptos-edge-template.
+prompt = "Include the Tauri v2 desktop/mobile runner? (No = pure serverless edge site: static SSR + hydration only)"
 default = true
 
 [placeholders.include_pwa]
@@ -39,7 +43,10 @@ default = true
 [conditional.'!include_tauri_desktop']
 ignore = [
     "crates/desktop",
+    "crates/app/src/tauri_bridge.rs",
+    "crates/web/index.html",
     "Trunk.toml",
+    ".github/workflows/desktop.yml",
     "scripts/build-android.sh",
     "scripts/build-android.ps1",
     "scripts/build-ios.sh",

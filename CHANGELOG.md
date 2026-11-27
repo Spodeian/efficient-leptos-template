@@ -7,12 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Edge mode** replaces `efficient-leptos-edge-template`: answering No to the Tauri prompt (`-d include_tauri_desktop=false`) generates a pure serverless edge site with no `crates/desktop`, Tauri bridge, `csr` features, Trunk shell, mobile scripts or mobile toolchain targets.
+- Schema.org `WebApplication` JSON-LD and a `twitter:card` tag in every pre-rendered page (from the edge template).
+- `template.yml` CI generates the template in desktop and edge modes and lints and tests both; it is not copied into generated projects.
+
 ### Fixed
 - `cargo generate` failed with "Substitution skipped, found invalid syntax" and created no files: workflows, `crates/shared/src/export.rs` and binary assets are now copied without Liquid substitution.
 - `CHANGELOG.md`, `CONTRIBUTING.md`, `Cargo.lock` and build output are no longer copied into generated projects (moved from `exclude` to `ignore`).
 - Generated projects take their own name in `wrangler.toml` and the `repository` URL instead of deploying over this template's Worker; this repo's own deploy passes `--name` from the repository name.
 
 ### Changed
+- Desktop-only CI (CSR lint, CSR browser tests, Android/iOS checks) moved to `desktop.yml`, which edge-mode projects do not get; `ci.yml` browser tests now run the `hydrate` build.
+- `scripts/build-web.sh` also requires `_headers`, `sw.js` and `manifest.json` when the project ships them (from the edge template).
 - `template-scaffold-check` CI now runs real `cargo generate` (defaults and every option off) instead of deleting crates to simulate it.
 - Lint policy lives in `[workspace.lints]` (`unsafe_code = "deny"`, `clippy::unwrap_used = "warn"`) with `clippy.toml` allowing unwraps in tests; `missing_docs` stays on each library crate root.
 - `escape_html` and the BSON import reuse `spodeian-export` instead of local copies.

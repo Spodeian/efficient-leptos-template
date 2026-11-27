@@ -15,16 +15,16 @@ A modular Rust & [Leptos 0.8](https://leptos.dev) template with two release targ
 
 The example app has a top bar, routed Dashboard (`/`), Analytics (`/analytics`), and About (`/about`) pages, interactive item management, Undo/Redo, a searchable Command Palette (`Ctrl+K`), SVG/HTML/share-link interchange, `spodeian-parallel` sweeps, bundled WGSL WebGPU shader support, Tauri v2 backend IPC commands, offline PWA support, and persistent storage built on the `spodeian-*` libraries. See [`ARCHITECTURE.md`](ARCHITECTURE.md) for deep technical details.
 
-> **Web-only release?** If your Leptos project deploys exclusively to serverless static edge hosts without a desktop/Tauri target, start from [`efficient-leptos-edge-template`](../efficient-leptos-edge-template) instead.
+> **Web-only release?** Answer **No** to the Tauri desktop prompt (or pass `-d include_tauri_desktop=false`) for a pure serverless edge site: static SSR + WASM hydration only, with no Tauri, CSR, Trunk or mobile targets. This replaces the former `efficient-leptos-edge-template`.
 
 ---
 
-## Choosing Across the Three Spodeian Templates
+## Choosing a Spodeian Template
 
 | Template | Best For | Architecture | Compute, GPU & Native Target |
 |---|---|---|---|
-| **`efficient-leptos-template`** *(this repo)* | Apps shipping **both** a pre-rendered website and a native desktop/mobile executable | 5 crates (`shared`, `app`, `web`, `ssg`, `desktop`) | Static SSR + WASM `hydrate` + Tauri v2 `csr` + native Rayon IPC commands + WGSL shader ready |
-| **`efficient-leptos-edge-template`** | Pure zero-backend edge websites, SEO content, calculators, PWAs | 4 crates (`shared`, `app`, `web`, `ssg`) — zero desktop deps | Static SSR + WASM `hydrate` only, JSON-LD, `sitemap.xml`, `_redirects`, Rayon SSR / SIMD128 WASM |
+| **`efficient-leptos-template`** *(this repo)*, desktop mode (default) | Apps shipping **both** a pre-rendered website and a native desktop/mobile executable | 5 crates (`shared`, `app`, `web`, `ssg`, `desktop`) | Static SSR + WASM `hydrate` + Tauri v2 `csr` + native Rayon IPC commands + WGSL shader ready |
+| **`efficient-leptos-template`** *(this repo)*, edge mode (`include_tauri_desktop=false`) | Pure zero-backend edge websites, SEO content, calculators, PWAs | 4 crates (`shared`, `app`, `web`, `ssg`) — zero desktop deps | Static SSR + WASM `hydrate` only, JSON-LD, `sitemap.xml`, Rayon SSR / SIMD128 WASM |
 | **`efficient-egui-template`** | Custom 2D/3D viewports, CAD/audio/science GUIs, single-binary desktop+web apps | 4 crates (`shared`, `app`, `desktop`, `web`) + `spodeian-ui` | `wgpu` (default) / `glow`, native `winit` + `mimalloc`, `spodeian-parallel` (Rayon/WASM), WGSL shader ready |
 
 ---
@@ -35,8 +35,10 @@ The example app has a top bar, routed Dashboard (`/`), Analytics (`/analytics`),
 ```bash
 cargo install cargo-generate
 cargo generate --git https://github.com/Spodeian/efficient-leptos-template.git
+# Pure serverless edge site (no Tauri, CSR or mobile):
+cargo generate --git https://github.com/Spodeian/efficient-leptos-template.git -d include_tauri_desktop=false
 ```
-Interactive prompts in [`cargo-generate.toml`](cargo-generate.toml) let you keep or exclude `crates/desktop` (Tauri v2), offline PWA assets (`sw.js`, `manifest.json`), and Cloudflare Pages configuration (`wrangler.toml`, `_headers`, `deploy.sh`).
+Interactive prompts in [`cargo-generate.toml`](cargo-generate.toml) let you choose desktop mode (Tauri v2 `crates/desktop`, CSR, mobile) or edge mode (web only), and keep or exclude offline PWA assets (`sw.js`, `manifest.json`), and Cloudflare Pages configuration (`wrangler.toml`, `_headers`, `deploy.sh`).
 
 ### Option B: GitHub Template
 1. Click **"Use this template"** > **"Create a new repository"** on GitHub.

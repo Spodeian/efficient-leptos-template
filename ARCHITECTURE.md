@@ -4,6 +4,8 @@ This template builds **two complementary targets from one Leptos 0.8 codebase**:
 1. **Serverless Edge Web Release (`ssr` + `hydrate`)**: Pre-rendered static HTML + WASM hydration deployed to Cloudflare Pages, GitHub Pages, Netlify, or S3.
 2. **Native Desktop & Mobile Bundle (`csr` + `Tauri v2`)**: Local OS executable and mobile shell (`crates/desktop`) communicating with frontend components through typed Tauri IPC commands.
 
+**Edge mode.** Generating with `include_tauri_desktop=false` keeps only target 1: cargo-generate drops `crates/desktop`, `crates/app/src/tauri_bridge.rs`, the Trunk shell (`crates/web/index.html`, `Trunk.toml`), the `csr` features, the mobile scripts and toolchain targets, and `.github/workflows/desktop.yml`. Code that exists only for the desktop build sits inside a Liquid `if include_tauri_desktop` block whose tags are written in comments, so this repo still compiles as-is. Keep new desktop-only code inside those tags, and `template.yml` CI proves both modes generate and lint cleanly.
+
 ---
 
 ## 1. Five-Crate Dual-Target Topology

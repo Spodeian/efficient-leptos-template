@@ -1,0 +1,105 @@
+name: Desktop & Mobile (Tauri)
+
+on:
+  push:
+    branches: [ "main", "dev" ]
+  pull_request:
+    branches: [ "main", "dev" ]
+    types: [ opened, synchronize, reopened, labeled, unlabeled ]
+  workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  lint-csr:
+    name: Lint Desktop CSR Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Configure Private Git Auth (Optional)
+        env:
+          SPODEIAN_GIT_TOKEN: ${{ secrets.SPODEIAN_CORE_TOKEN || secrets.PRIVATE_READ_ACCESS || secrets.GH_PAT }}
+        run: |
+          if [ -n "$SPODEIAN_GIT_TOKEN" ]; then
+            echo "CARGO_NET_GIT_FETCH_WITH_CLI=true" >> "$GITHUB_ENV"
+            git config --global url."https://x-access-token:${SPODEIAN_GIT_TOKEN}@github.com/".insteadOf "https://github.com/"
+          fi
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+          targets: wasm32-unknown-unknown
+      - uses: Swatinem/rust-cache@v2
+      - name: Clippy (client-side rendering, wasm32)
+        run: cargo clippy -p app -p web --target wasm32-unknown-unknown --features app/csr,web/csr -- -D warnings
+
+  test-wasm-csr:
+    name: WASM Browser Tests, CSR (${{ matrix.browser }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chrome, firefox]
+    steps:
+      - uses: actions/checkout@v7
+      - name: Configure Private Git Auth (Optional)
+        env:
+          SPODEIAN_GIT_TOKEN: ${{ secrets.SPODEIAN_CORE_TOKEN || secrets.PRIVATE_READ_ACCESS || secrets.GH_PAT }}
+        run: |
+          if [ -n "$SPODEIAN_GIT_TOKEN" ]; then
+            echo "CARGO_NET_GIT_FETCH_WITH_CLI=true" >> "$GITHUB_ENV"
+            git config --global url."https://x-access-token:${SPODEIAN_GIT_TOKEN}@github.com/".insteadOf "https://github.com/"
+          fi
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Install wasm-bindgen Test Runner (version from Cargo.lock)
+        run: |
+          WB_VERSION=$(cargo pkgid --quiet wasm-bindgen | sed 's/.*[@#]//')
+          if [ "$(wasm-bindgen --version 2>/dev/null | awk '{print $2}')" != "$WB_VERSION" ]; then
+            cargo install wasm-bindgen-cli --version "$WB_VERSION" --locked --force
+          fi
+
+      - name: Run WebAssembly Browser Tests
+        shell: bash
+        env:
+          WASM_BINDGEN_TEST_TIMEOUT: "60"
+        run: |
+          if [ "${{ matrix.browser }}" = "chrome" ]; then
+            export CHROMEDRIVER="$CHROMEWEBDRIVER/chromedriver"
+          else
+            export GECKODRIVER="$GECKOWEBDRIVER/geckodriver"
+          fi
+          cargo test -p web --features csr --tests --target wasm32-unknown-unknown
+
+  mobile-build-check:
+    name: Mobile Build Check (Android & iOS)
+    runs-on: macos-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Configure Private Git Auth (Optional)
+        env:
+          SPODEIAN_GIT_TOKEN: ${{ secrets.SPODEIAN_CORE_TOKEN || secrets.PRIVATE_READ_ACCESS || secrets.GH_PAT }}
+        run: |
+          if [ -n "$SPODEIAN_GIT_TOKEN" ]; then
+            echo "CARGO_NET_GIT_FETCH_WITH_CLI=true" >> "$GITHUB_ENV"
+            git config --global url."https://x-access-token:${SPODEIAN_GIT_TOKEN}@github.com/".insteadOf "https://github.com/"
+          fi
+
+      - name: Setup Rust with Mobile Targets
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-linux-android,aarch64-apple-ios-sim
+
+      - name: Rust Cache
+        uses: Swatinem/rust-cache@v2
+
+      - name: Check Android Mobile Target
+        run: cargo check -p desktop --target aarch64-linux-android
+
+      - name: Check iOS Simulator Target
+        run: cargo check -p desktop --target aarch64-apple-ios-sim

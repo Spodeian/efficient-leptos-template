@@ -1,0 +1,76 @@
+name: Template Generation
+
+# Tests this repo as a cargo-generate template. cargo-generate.toml leaves this file out of
+# generated projects, where it would make no sense.
+on:
+  push:
+    branches: [ "main", "dev" ]
+  pull_request:
+    branches: [ "main", "dev" ]
+  workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  template-scaffold-check:
+    name: Generate & Lint (${{ matrix.mode }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Desktop: every option on (the defaults).
+          - mode: desktop
+            defines: ""
+          # Edge: the pure serverless site that replaced efficient-leptos-edge-template,
+          # with every other option off as well.
+          - mode: edge
+            defines: "-d include_tauri_desktop=false -d include_pwa=false -d include_cloudflare_pages=false"
+    steps:
+      - uses: actions/checkout@v7
+      - name: Configure Private Git Auth (Optional)
+        env:
+          SPODEIAN_GIT_TOKEN: ${{ secrets.SPODEIAN_CORE_TOKEN || secrets.PRIVATE_READ_ACCESS || secrets.GH_PAT }}
+        run: |
+          if [ -n "$SPODEIAN_GIT_TOKEN" ]; then
+            echo "CARGO_NET_GIT_FETCH_WITH_CLI=true" >> "$GITHUB_ENV"
+            git config --global url."https://x-access-token:${SPODEIAN_GIT_TOKEN}@github.com/".insteadOf "https://github.com/"
+          fi
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+          targets: wasm32-unknown-unknown
+      - uses: Swatinem/rust-cache@v2
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-generate
+      - name: Generate a project
+        run: |
+          # A clean copy: cargo-generate copies the whole source tree, including a cache-restored target/.
+          mkdir -p "$RUNNER_TEMP/template"
+          git archive HEAD | tar -x -C "$RUNNER_TEMP/template"
+          cargo generate --path "$RUNNER_TEMP/template" --name scaffold-check --destination "$RUNNER_TEMP" \
+            --silent --vcs none ${{ matrix.defines }}
+      - name: Check the project took its own name
+        if: matrix.mode == 'desktop'
+        run: grep -qx 'name = "scaffold-check"' "$RUNNER_TEMP/scaffold-check/wrangler.toml"
+      - name: Check edge mode left no desktop code behind
+        if: matrix.mode == 'edge'
+        working-directory: ${{ runner.temp }}/scaffold-check
+        run: |
+          test ! -e crates/desktop && test ! -e crates/app/src/tauri_bridge.rs && test ! -e Trunk.toml
+          ! grep -nE '^(csr|tauri[a-z-]*) *=' crates/app/Cargo.toml crates/web/Cargo.toml Cargo.toml
+          ! grep -nE 'android|ios' rust-toolchain.toml
+          ! grep -rn 'include_tauri_desktop' .
+      - name: Lint and test the generated project
+        working-directory: ${{ runner.temp }}/scaffold-check
+        env:
+          CARGO_TARGET_DIR: ${{ github.workspace }}/target
+        run: |
+          cargo clippy -p shared -p app -p ssg --all-targets --features app/ssr -- -D warnings
+          cargo clippy -p app -p web --target wasm32-unknown-unknown --features app/hydrate,web/hydrate -- -D warnings
+          if [ "${{ matrix.mode }}" = desktop ]; then
+            cargo clippy -p app -p web --target wasm32-unknown-unknown --features app/csr,web/csr -- -D warnings
+          fi
+          cargo test -p shared

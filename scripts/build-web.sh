@@ -34,8 +34,13 @@ cargo leptos build --release
 echo "==> Pre-rendering every route to HTML"
 ./target/release/ssg "$SITE_DIR"
 
-# Fail if any page or SEO discovery file is missing or empty: a broken site must not deploy.
-for artifact in index.html analytics.html about.html 404.html sitemap.xml robots.txt; do
+# Fail if any page, edge config, or SEO discovery file is missing or empty: a broken site must not deploy.
+artifacts="index.html analytics.html about.html 404.html sitemap.xml robots.txt"
+# Edge config and PWA files are optional template parts: require them only when the project ships them.
+for optional in _headers _redirects sw.js manifest.json; do
+    if [ -f "crates/web/public/$optional" ]; then artifacts="$artifacts $optional"; fi
+done
+for artifact in $artifacts; do
     if [ ! -s "$SITE_DIR/$artifact" ]; then
         echo "ERROR: $SITE_DIR/$artifact was not generated" >&2
         exit 1

@@ -24,6 +24,13 @@ pub const THEME_PREPAINT_SCRIPT: &str = r#"(function () {
             } catch (e) {}
         })();"#;
 
+/// Schema.org `WebApplication` structured data for search engines (from the edge template).
+pub const JSON_LD_SCRIPT: &str = concat!(
+    r#"{"@context":"https://schema.org","@type":"WebApplication","name":"Leptos Serverless & Desktop Template","applicationCategory":"DeveloperApplication","operatingSystem":"Web","softwareVersion":""#,
+    env!("CARGO_PKG_VERSION"),
+    r#""}"#,
+);
+
 /// The full HTML document for one pre-rendered page.
 pub fn shell(options: LeptosOptions) -> impl IntoView {
     view! {
@@ -35,6 +42,7 @@ pub fn shell(options: LeptosOptions) -> impl IntoView {
                 <meta name="color-scheme" content="dark light" />
                 <meta name="theme-color" content="#0d1117" />
                 <script inner_html=THEME_PREPAINT_SCRIPT></script>
+                <script type="application/ld+json" inner_html=JSON_LD_SCRIPT></script>
                 <link rel="manifest" href="/manifest.json" />
                 <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
                 <link rel="alternate icon" href="/favicon.ico" />

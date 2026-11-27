@@ -61,8 +61,10 @@ base64 = "0.22"
 sha2 = "0.10"
 shared = { path = "crates/shared" }
 app = { path = "crates/app" }
+# {% if include_tauri_desktop %}
 tauri = { version = "2", features = ["config-toml"] }
 tauri-build = { version = "2", features = ["config-toml"] }
+# {% endif %}
 # Local sibling checkout of spodeian-core (updated to tag/git on release).
 spodeian-parallel = { git = "https://github.com/Spodeian/spodeian-core", tag = "v3.1.0", version = "^1.0.0" }
 spodeian-cache = { git = "https://github.com/Spodeian/spodeian-core", tag = "v3.1.0", version = "^1.1.0" }
