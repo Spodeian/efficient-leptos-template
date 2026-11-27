@@ -12,7 +12,7 @@ edition = "2024"
 license = "PolyForm-Noncommercial-1.0.0"
 readme = "README.md"
 description = "Modern, modular Serverless (WASM/Cloudflare Pages/PWA) & Native Desktop template built with Rust and Leptos"
-repository = "https://github.com/Spodeian/efficient-leptos-template"
+repository = "https://github.com/Spodeian/{{project-name}}"
 
 [workspace.dependencies]
 # Leptos is lightly maintained since May 2026 and 0.9 will break APIs: pin exact versions.
