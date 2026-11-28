@@ -2,7 +2,8 @@
 //
 // - Pages: network first, so a new release shows on the first visit after deploying;
 //   the cached copy is used only when the network fails.
-// - /pkg/ files (content-hashed, so a given URL never changes): cache first.
+// - /pkg/ files (content-hashed, so a given URL never changes) and /fonts/ (served as
+//   immutable): cache first, with no network request once cached.
 // - Everything else: network first, cached copy as fallback.
 //
 // The web build (`ssg`) fills in the two placeholders below. In the desktop build they
@@ -29,12 +30,15 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-async function networkFirst(request, fallbackUrl) {
+// `waitUntil` keeps the worker alive until the cache write lands, even after the response
+// has been returned.
+async function networkFirst(event, fallbackUrl) {
+  const { request } = event;
   const cache = await caches.open(CACHE_NAME);
   try {
     const response = await fetch(request);
     if (response.ok) {
-      cache.put(request, response.clone());
+      event.waitUntil(cache.put(request, response.clone()));
     }
     return response;
   } catch (error) {
@@ -47,7 +51,8 @@ async function networkFirst(request, fallbackUrl) {
   }
 }
 
-async function cacheFirst(request) {
+async function cacheFirst(event) {
+  const { request } = event;
   const cache = await caches.open(CACHE_NAME);
   const cached = await cache.match(request);
   if (cached) {
@@ -55,7 +60,7 @@ async function cacheFirst(request) {
   }
   const response = await fetch(request);
   if (response.ok) {
-    cache.put(request, response.clone());
+    event.waitUntil(cache.put(request, response.clone()));
   }
   return response;
 }
@@ -68,10 +73,10 @@ self.addEventListener('fetch', (event) => {
   }
   if (request.mode === 'navigate') {
     // Offline and never visited: fall back to the home page, which can route client-side.
-    event.respondWith(networkFirst(request, '/'));
-  } else if (url.pathname.startsWith('/pkg/')) {
-    event.respondWith(cacheFirst(request));
+    event.respondWith(networkFirst(event, '/'));
+  } else if (url.pathname.startsWith('/pkg/') || url.pathname.startsWith('/fonts/')) {
+    event.respondWith(cacheFirst(event));
   } else {
-    event.respondWith(networkFirst(request));
+    event.respondWith(networkFirst(event));
   }
 });

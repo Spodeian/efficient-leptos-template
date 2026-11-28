@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Storage loads every item in one IndexedDB transaction and saves all changed and removed items in one transaction each (`spodeian-cache` 1.2 batch API), instead of one sequential transaction per item.
+- Service worker: `/fonts/` is served cache-first, like `/pkg/` (`_headers` already marks it immutable), and cache writes are kept alive with `waitUntil`.
+
 ### Added
 - **Edge mode** replaces `efficient-leptos-edge-template`: answering No to the Tauri prompt (`-d include_tauri_desktop=false`) generates a pure serverless edge site with no `crates/desktop`, Tauri bridge, `csr` features, Trunk shell, mobile scripts or mobile toolchain targets.
 - Schema.org `WebApplication` JSON-LD and a `twitter:card` tag in every pre-rendered page (from the edge template).

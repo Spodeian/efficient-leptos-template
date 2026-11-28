@@ -2,7 +2,8 @@
 //!
 //! - Each item is one record in an [`AsyncTieredStore`]: IndexedDB in the browser (and in
 //!   the desktop app's webview), behind an in-memory cache of [`MEMORY_WORKING_SET_LIMIT`]
-//!   records. A change writes only the records that changed.
+//!   records. A change writes only the records that changed, in one transaction, and a
+//!   load reads every record in one transaction.
 //! - Settings and the item order go through [`PreferentialStore`], which puts each value
 //!   in the tier `PreferentialRouter` chooses.
 //! - Saves are asynchronous. Their real outcome lands in [`StorageStatus`], which the
@@ -237,9 +238,11 @@ impl AppStore {
             ..AppState::default()
         };
         let mut saved = HashMap::new();
-        for id in ids {
+        // One batched read (a single IndexedDB transaction) rather than one per item.
+        let items = self.items.get_many(&ids).await?;
+        for (id, item) in ids.into_iter().zip(items) {
             // An interrupted save can leave an id without its record; skip it.
-            if let Some(item) = self.items.get(&id).await? {
+            if let Some(item) = item {
                 saved.insert(id, content_hash(&item)?);
                 state.collection.add(item);
             }
@@ -248,20 +251,18 @@ impl AppStore {
         Ok(Some(state))
     }
 
-    /// Saves `state`, writing only the items that changed since the last save or load.
-    /// Returns the tier that holds the settings and item order.
+    /// Saves `state`, writing only the items that changed since the last save or load, in
+    /// one batched write. Returns the tier that holds the settings and item order.
     pub async fn save(&self, state: &AppState) -> Result<StorageBackend, StorageError> {
         let mut next = HashMap::with_capacity(state.collection.items.len());
+        let mut changed = Vec::new();
         for item in &state.collection.items {
             let hash = content_hash(item)?;
-            let unchanged = self.saved.borrow().get(&item.id) == Some(&hash);
-            if !unchanged {
-                self.items.put(item.id.clone(), item.clone()).await?;
-                self.saved.borrow_mut().insert(item.id.clone(), hash);
+            if self.saved.borrow().get(&item.id) != Some(&hash) {
+                changed.push((item.id.clone(), item.clone()));
             }
             next.insert(item.id.clone(), hash);
         }
-
         let removed: Vec<String> = self
             .saved
             .borrow()
@@ -269,10 +270,10 @@ impl AppStore {
             .filter(|id| !next.contains_key(*id))
             .cloned()
             .collect();
-        for id in removed {
-            self.items.remove(&id).await?;
-            self.saved.borrow_mut().remove(&id);
-        }
+
+        self.items.put_many(changed).await?;
+        self.items.remove_many(&removed).await?;
+        *self.saved.borrow_mut() = next;
 
         let order: Vec<&str> = state
             .collection
