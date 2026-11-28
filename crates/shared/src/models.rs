@@ -12,19 +12,19 @@ pub const DEFAULT_THEME: ThemeMode = ThemeMode::Dark;
 /// Task item priority level.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, Default)]
 pub enum Priority {
-    /// Low-urgency backlog task.
+    /// Low-urgency backlog work.
     Low,
     /// Standard priority task.
     #[default]
     Medium,
     /// Important near-term deliverable.
     High,
-    /// Blocking or release-critical task.
+    /// Blocking or release-critical item.
     Critical,
 }
 
 impl Priority {
-    /// Human-readable label for UI badges and exports.
+    /// Human-readable label for badges and exports.
     pub fn label(self) -> &'static str {
         match self {
             Self::Low => "Low",
@@ -34,7 +34,7 @@ impl Priority {
         }
     }
 
-    /// CSS badge class name for styling priority pills.
+    /// CSS-friendly priority badge class identifier.
     pub fn badge_class(self) -> &'static str {
         match self {
             Self::Low => "priority-low",
@@ -54,9 +54,9 @@ pub struct Item {
     pub title: String,
     /// Optional extended description.
     pub description: String,
-    /// Priority classification.
+    /// Urgency classification.
     pub priority: Priority,
-    /// Completion status flag.
+    /// Completion flag.
     pub completed: bool,
     /// Creation timestamp in Unix milliseconds (bit-preserved across BSON `i64` limits).
     #[serde(default, with = "spodeian_export::u64_i64_compat")]
@@ -82,40 +82,36 @@ impl Item {
     }
 }
 
-/// Collection wrapper for item operations.
+/// Collection wrapper for item operations and metrics.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
 #[serde(default)]
 pub struct ItemCollection {
-    /// Ordered items managed in the application.
+    /// Ordered items managed in the working set.
     pub items: Vec<Item>,
 }
 
 impl ItemCollection {
-    /// Creates an empty item collection.
+    /// Creates an empty collection.
     pub fn new() -> Self {
         Self { items: Vec::new() }
     }
 
-    /// Creates a collection seeded with four representative sample items.
+    /// Creates a collection pre-populated with four representative template items.
     pub fn with_sample_data() -> Self {
         Self {
             items: vec![
                 Item {
                     id: "item-1".to_string(),
                     title: "Deploy Serverless WebApp".to_string(),
-                    description:
-                        "Publish high-performance WASM application directly to Cloudflare Pages"
-                            .to_string(),
+                    description: "Publish high-performance WASM application directly to Cloudflare Pages or GitHub Pages".to_string(),
                     priority: Priority::Critical,
                     completed: false,
                     created_at: 1,
                 },
                 Item {
                     id: "item-2".to_string(),
-                    title: "Configure Native Desktop (Tauri)".to_string(),
-                    description:
-                        "Verify cross-platform desktop compilation and local asset loading"
-                            .to_string(),
+                    title: "Configure Native Desktop".to_string(),
+                    description: "Verify cross-platform native desktop compilation and local asset loading".to_string(),
                     priority: Priority::High,
                     completed: false,
                     created_at: 2,
@@ -123,18 +119,15 @@ impl ItemCollection {
                 Item {
                     id: "item-3".to_string(),
                     title: "Verify Offline PWA Caching".to_string(),
-                    description: "Check Service Worker caching strategy for offline web support"
-                        .to_string(),
+                    description: "Check Service Worker caching strategy for offline web support".to_string(),
                     priority: Priority::Medium,
                     completed: true,
                     created_at: 3,
                 },
                 Item {
                     id: "item-4".to_string(),
-                    title: "Test JSON & CSV Interchange".to_string(),
-                    description:
-                        "Import and export data with clipboard toasts and direct downloads"
-                            .to_string(),
+                    title: "Test Data Interchange".to_string(),
+                    description: "Import and export data via formatted JSON, RFC 4180 CSV, and compressed BSON".to_string(),
                     priority: Priority::Low,
                     completed: false,
                     created_at: 4,
@@ -148,7 +141,7 @@ impl ItemCollection {
         self.items.push(item);
     }
 
-    /// Removes the first item matching `id`, returning `true` if removed.
+    /// Removes the first item matching `id`, returning `true` if found.
     pub fn remove(&mut self, id: &str) -> bool {
         if let Some(pos) = self.items.iter().position(|i| i.id == id) {
             self.items.remove(pos);
@@ -165,7 +158,7 @@ impl ItemCollection {
         }
     }
 
-    /// Removes all completed items from the collection.
+    /// Drops all completed items from the collection.
     pub fn clear_completed(&mut self) {
         self.items.retain(|i| !i.completed);
     }
@@ -175,7 +168,7 @@ impl ItemCollection {
         self.items.clear();
     }
 
-    /// Total number of items.
+    /// Total number of items in the collection.
     pub fn total_count(&self) -> usize {
         self.items.len()
     }
@@ -185,7 +178,7 @@ impl ItemCollection {
         self.items.iter().filter(|i| i.completed).count()
     }
 
-    /// Number of pending items.
+    /// Number of pending (uncompleted) items.
     pub fn pending_count(&self) -> usize {
         self.items.iter().filter(|i| !i.completed).count()
     }
@@ -207,7 +200,7 @@ impl ItemCollection {
             .count()
     }
 
-    /// Returns item counts grouped by priority in order `(Critical, High, Medium, Low)`.
+    /// Returns counts per priority level ordered `(Critical, High, Medium, Low)`.
     pub fn priority_counts(&self) -> [usize; 4] {
         let mut counts = [0usize; 4];
         for item in &self.items {

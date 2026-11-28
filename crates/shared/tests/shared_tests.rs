@@ -377,3 +377,23 @@ mod prop_tests {
         assert!(summary.wgsl_shader_ready);
     }
 }
+
+#[test]
+fn test_csv_import_validation() {
+    // A headerless first row that mentions "title" is data, not a header.
+    let col = import_from_csv(",Fix title bar,,High,false\n").expect("headerless row");
+    assert_eq!(col.items.len(), 1);
+    assert_eq!(col.items[0].title, "Fix title bar");
+    assert!(col.items[0].id.starts_with("item-"), "blank id gets filled");
+    assert!(
+        import_from_csv("id,title\nonly-id,short\n").is_err(),
+        "short rows rejected"
+    );
+    assert!(
+        import_from_json("{}")
+            .expect("empty object")
+            .collection
+            .items
+            .is_empty()
+    );
+}

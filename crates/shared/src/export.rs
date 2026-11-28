@@ -2,41 +2,40 @@
 
 use crate::models::{AppConfig, AppState, CURRENT_SCHEMA_VERSION, Item, ItemCollection, Priority};
 use base64::Engine as _;
-use spodeian_export::{escape_csv_field, parse_csv_line as parse_csv_fields};
 use spodeian_persist::{StateMigrator, VersionedSnapshot};
 use thiserror::Error;
 
 /// Prefix used for compact shareable state fragments in URLs.
 pub const SHARE_HASH_PREFIX: &str = "#state=";
 
-/// Errors arising from data export or import operations.
+/// Errors produced when exporting or importing [`AppState`] or [`ItemCollection`] payloads.
 #[derive(Error, Debug)]
 pub enum ExportError {
-    /// JSON serialization or deserialization failure.
-    #[error("JSON serialization error: {0}")]
-    JsonSerialize(#[from] serde_json::Error),
+    /// JSON serialization or parsing failure.
+    #[error("JSON error: {0}")]
+    Json(#[from] serde_json::Error),
+    /// CSV format or column validation error.
+    #[error("CSV parse error: {0}")]
+    Csv(String),
+    /// Unrecognized priority cell value in CSV input.
+    #[error("Invalid priority format: {0}")]
+    InvalidPriority(String),
+    /// Compressed BSON or share-link decoding failure.
+    #[error("Share link / BSON error: {0}")]
+    Bson(String),
+    /// Empty payload passed to an importer.
+    #[error("Empty data provided")]
+    EmptyData,
     /// Versioned state envelope migration failure.
     #[error("State migration error: {0}")]
     Migration(String),
-    /// Underlying `spodeian-export` failure.
-    #[error("Core export error: {0}")]
-    Core(#[from] spodeian_export::ExportError),
-    /// CSV syntax or structure error.
-    #[error("CSV parsing error: {0}")]
-    CsvParse(String),
-    /// Unrecognized priority column value.
-    #[error("Invalid priority format: {0}")]
-    InvalidPriority(String),
-    /// Compressed BSON or shareable link decode failure.
-    #[error("Share link / BSON error: {0}")]
-    Bson(String),
-    /// Empty string or byte slice passed to an importer.
-    #[error("Empty data provided")]
-    EmptyData,
+    /// Underlying `spodeian-export` error.
+    #[error("Export error: {0}")]
+    Spodeian(#[from] spodeian_export::ExportError),
 }
 
 fn normalize_state_version(mut state: AppState) -> AppState {
-    if state.schema_version == 0 || state.schema_version < CURRENT_SCHEMA_VERSION {
+    if state.schema_version < CURRENT_SCHEMA_VERSION {
         state.schema_version = CURRENT_SCHEMA_VERSION;
     }
     state
@@ -44,23 +43,22 @@ fn normalize_state_version(mut state: AppState) -> AppState {
 
 pub use spodeian_export::escape_html;
 
-/// Serializes application state to formatted JSON via `spodeian_export`.
+/// Serializes application state to formatted JSON.
 pub fn export_to_json(state: &AppState) -> Result<String, ExportError> {
-    spodeian_export::export_to_json(state).map_err(ExportError::Core)
+    spodeian_export::export_to_json(state).map_err(ExportError::Spodeian)
 }
 
-/// Deserializes application state from a raw [`AppState`], [`VersionedSnapshot<AppState>`], or
-/// standalone [`ItemCollection`] JSON string, normalizing `schema_version` to
-/// [`CURRENT_SCHEMA_VERSION`].
+/// Deserializes application state from a JSON string.
+/// Transparently handles [`VersionedSnapshot<AppState>`], full [`AppState`] payloads,
+/// and standalone [`ItemCollection`] payloads, upgrading older `schema_version`s.
 pub fn import_from_json(json_str: &str) -> Result<AppState, ExportError> {
     let trimmed = json_str.trim();
     if trimmed.is_empty() {
         return Err(ExportError::EmptyData);
     }
 
-    if let Ok(value) = serde_json::from_str::<serde_json::Value>(trimmed)
-        && let Some(obj) = value.as_object()
-    {
+    let value: serde_json::Value = serde_json::from_str(trimmed)?;
+    if let Some(obj) = value.as_object() {
         if obj.contains_key("payload")
             && obj.contains_key("schema_version")
             && let Ok(snapshot) =
@@ -81,31 +79,39 @@ pub fn import_from_json(json_str: &str) -> Result<AppState, ExportError> {
         }
     }
 
-    let state = StateMigrator::deserialize_versioned_or_raw::<AppState>(trimmed)
-        .map_err(|e| ExportError::Migration(e.to_string()))?;
-    Ok(normalize_state_version(state))
+    StateMigrator::deserialize_versioned_or_raw::<AppState>(trimmed)
+        .map(normalize_state_version)
+        .map_err(|e| ExportError::Migration(e.to_string()))
 }
 
-/// Serializes item collection to CSV string.
+/// Serializes an item collection to RFC 4180-compliant CSV via `spodeian_export`.
 pub fn export_to_csv(collection: &ItemCollection) -> Result<String, ExportError> {
-    let mut csv = String::from("id,title,description,priority,completed,created_at\n");
-    for item in &collection.items {
-        let escaped_title = escape_csv_field(&item.title);
-        let escaped_desc = escape_csv_field(&item.description);
-        csv.push_str(&format!(
-            "{},{},{},{},{},{}\n",
-            escape_csv_field(&item.id),
-            escaped_title,
-            escaped_desc,
-            item.priority.label(),
-            item.completed,
-            item.created_at
-        ));
-    }
-    Ok(csv)
+    let headers = [
+        "id",
+        "title",
+        "description",
+        "priority",
+        "completed",
+        "created_at",
+    ];
+    let rows: Vec<Vec<String>> = collection
+        .items
+        .iter()
+        .map(|item| {
+            vec![
+                item.id.clone(),
+                item.title.clone(),
+                item.description.clone(),
+                item.priority.label().to_string(),
+                item.completed.to_string(),
+                item.created_at.to_string(),
+            ]
+        })
+        .collect();
+    Ok(spodeian_export::export_to_csv(&headers, &rows))
 }
 
-/// Deserializes item collection from CSV string.
+/// Deserializes an item collection from a CSV string using `spodeian_export::parse_csv_line`.
 pub fn import_from_csv(csv_str: &str) -> Result<ItemCollection, ExportError> {
     let trimmed = csv_str.trim();
     if trimmed.is_empty() {
@@ -113,24 +119,57 @@ pub fn import_from_csv(csv_str: &str) -> Result<ItemCollection, ExportError> {
     }
 
     let mut items = Vec::new();
-    let mut lines = trimmed.lines();
-
-    // Verify or skip header
-    if let Some(header) = lines.next()
-        && !header.to_lowercase().contains("title")
-        && let Some(item) = parse_csv_line(header)?
-    {
-        items.push(item);
-    }
-
-    for line in lines {
-        if let Some(item) = parse_csv_line(line)? {
-            items.push(item);
+    for (idx, line) in trimmed.lines().enumerate() {
+        let trimmed_line = line.trim();
+        if trimmed_line.is_empty() {
+            continue;
         }
+        if idx == 0 && trimmed_line.to_lowercase().starts_with("id,") {
+            continue;
+        }
+
+        let fields = spodeian_export::parse_csv_line(trimmed_line);
+        if fields.len() < 5 {
+            return Err(ExportError::Csv(format!(
+                "Line {}: Expected at least 5 columns (id,title,description,priority,completed[,created_at]), found {}",
+                idx + 1,
+                fields.len()
+            )));
+        }
+
+        let title = fields[1].clone();
+        // A blank id would collide on toggle/remove, so derive one from the title.
+        let id = if fields[0].is_empty() {
+            format!("item-{}", djb2_hash(&title))
+        } else {
+            fields[0].clone()
+        };
+        let description = fields[2].clone();
+        let priority = match fields[3].to_lowercase().as_str() {
+            "low" => Priority::Low,
+            "medium" => Priority::Medium,
+            "high" => Priority::High,
+            "critical" => Priority::Critical,
+            other => return Err(ExportError::InvalidPriority(other.to_string())),
+        };
+        let completed = fields[4].eq_ignore_ascii_case("true") || fields[4] == "1";
+        let created_at = fields
+            .get(5)
+            .and_then(|s| s.parse::<u64>().ok())
+            .unwrap_or(0);
+
+        items.push(Item {
+            id,
+            title,
+            description,
+            priority,
+            completed,
+            created_at,
+        });
     }
 
     if items.is_empty() {
-        return Err(ExportError::CsvParse(
+        return Err(ExportError::Csv(
             "No valid items parsed from CSV".to_string(),
         ));
     }
@@ -138,68 +177,19 @@ pub fn import_from_csv(csv_str: &str) -> Result<ItemCollection, ExportError> {
     Ok(ItemCollection { items })
 }
 
-fn parse_csv_line(line: &str) -> Result<Option<Item>, ExportError> {
-    let trimmed = line.trim();
-    if trimmed.is_empty() {
-        return Ok(None);
-    }
-
-    let fields = parse_csv_fields(trimmed);
-    if fields.is_empty() {
-        return Ok(None);
-    }
-
-    let id = fields.first().cloned().unwrap_or_default();
-    let title = fields
-        .get(1)
-        .cloned()
-        .unwrap_or_else(|| "Untitled".to_string());
-    let description = fields.get(2).cloned().unwrap_or_default();
-    let priority_str = fields.get(3).map(|s| s.as_str()).unwrap_or("Medium");
-    let completed_str = fields.get(4).map(|s| s.as_str()).unwrap_or("false");
-    let created_at_str = fields.get(5).map(|s| s.as_str()).unwrap_or("0");
-
-    let priority = match priority_str.to_lowercase().as_str() {
-        "low" => Priority::Low,
-        "medium" => Priority::Medium,
-        "high" => Priority::High,
-        "critical" => Priority::Critical,
-        other => return Err(ExportError::InvalidPriority(other.to_string())),
-    };
-
-    let completed = completed_str.eq_ignore_ascii_case("true") || completed_str == "1";
-    let created_at = created_at_str.parse::<u64>().unwrap_or(0);
-
-    Ok(Some(Item {
-        id: if id.is_empty() {
-            format!("item-{}", items_hash(&title))
-        } else {
-            id
-        },
-        title,
-        description,
-        priority,
-        completed,
-        created_at,
-    }))
+fn djb2_hash(val: &str) -> u32 {
+    val.bytes().fold(5381u32, |h, b| {
+        (h << 5).wrapping_add(h).wrapping_add(u32::from(b))
+    })
 }
 
-fn items_hash(val: &str) -> u32 {
-    let mut h: u32 = 5381;
-    for b in val.bytes() {
-        h = ((h << 5).wrapping_add(h)).wrapping_add(b as u32);
-    }
-    h
-}
-
-/// Exports the entire application state into compressed BSON binary bytes (Zlib-compressed BSON).
+/// Exports the application state into compressed BSON binary bytes (Zlib-compressed BSON).
 pub fn export_to_compressed_bson(state: &AppState) -> Result<Vec<u8>, String> {
     spodeian_export::export_to_compressed_bson(state)
         .map_err(|e| format!("BSON serialization failed: {e}"))
 }
 
-/// Imports and restores an [`AppState`] from a compressed (or raw) BSON slice, accepting
-/// standalone [`ItemCollection`] documents as well as full [`AppState`] payloads.
+/// Imports and restores an [`AppState`] from a compressed (or raw) BSON slice.
 pub fn import_from_compressed_bson(bytes: &[u8]) -> Result<AppState, String> {
     if bytes.is_empty() {
         return Err("BSON input is empty".to_string());
