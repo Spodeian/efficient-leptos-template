@@ -94,7 +94,7 @@ pub fn AboutPage(
                             "Native Tauri v2 desktop/mobile runner registering native Rayon IPC commands (desktop_runtime_summary, compute_harmonic_sweep_native) with mimalloc."
                         </span>
                     </div>
-                    // {% endif %}
+                // {% endif %}
                 </div>
             </div>
 

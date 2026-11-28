@@ -59,7 +59,11 @@ jobs:
         if: matrix.mode == 'edge'
         working-directory: ${{ runner.temp }}/scaffold-check
         run: |
-          test ! -e crates/desktop && test ! -e crates/app/src/tauri_bridge.rs && test ! -e Trunk.toml
+          for path in crates/desktop crates/app/src/tauri_bridge.rs Trunk.toml; do
+            if [ -e "$path" ]; then
+              echo "::error::edge mode left $path behind"; ls -la "$path"; exit 1
+            fi
+          done
           ! grep -nE '^(csr|tauri[a-z-]*) *=' crates/app/Cargo.toml crates/web/Cargo.toml Cargo.toml
           ! grep -nE 'android|ios' rust-toolchain.toml
           ! grep -rn 'include_tauri_desktop' .

@@ -222,7 +222,7 @@ pub fn HelpModal(
                                             <strong>"crates/desktop:"</strong>
                                             " Tauri v2 native desktop runner with strict CSP and mimalloc."
                                         </li>
-                                        // {% endif %}
+                                    // {% endif %}
                                     </ul>
                                 </section>
 
