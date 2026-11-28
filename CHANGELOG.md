@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Changed
+- spodeian-core v3.3.0: native content stores now delete superseded data instead of keeping every version on disk.
 - Storage loads every item in one IndexedDB transaction and saves all changed and removed items in one transaction each (`spodeian-cache` 1.2 batch API), instead of one sequential transaction per item.
 - Service worker: `/fonts/` is served cache-first, like `/pkg/` (`_headers` already marks it immutable), and cache writes are kept alive with `waitUntil`.
 
