@@ -64,9 +64,18 @@ jobs:
               echo "::error::edge mode left $path behind"; ls -la "$path"; exit 1
             fi
           done
-          ! grep -nE '^(csr|tauri[a-z-]*) *=' crates/app/Cargo.toml crates/web/Cargo.toml Cargo.toml
-          ! grep -nE 'android|ios' rust-toolchain.toml
-          ! grep -rn 'include_tauri_desktop' .
+          # `! grep` would not fail the step under `bash -e`, so each check exits explicitly.
+          fail() { echo "::error::$1"; exit 1; }
+          if grep -nE '^(csr|tauri[a-z-]*) *=' crates/app/Cargo.toml crates/web/Cargo.toml Cargo.toml; then
+            fail "edge mode left csr/tauri dependencies or features"
+          fi
+          if grep -nE 'android|ios' rust-toolchain.toml; then
+            fail "edge mode left mobile toolchain targets"
+          fi
+          # Unrendered Liquid tags (the docs mention the flag by name on purpose).
+          if grep -rnE '\{%-?[^%]*include_tauri_desktop' .; then
+            fail "edge mode left Liquid tags unrendered"
+          fi
       - name: Lint and test the generated project
         working-directory: ${{ runner.temp }}/scaffold-check
         env:
